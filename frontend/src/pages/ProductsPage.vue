@@ -1,14 +1,25 @@
 <template>
   <div class="products-page">
     <div class="page-header">
-      <h1 class="page-title">All Products</h1>
+      <h1 class="page-title">Discover Products</h1>
       <p class="page-sub">Browse our entire collection of 10,000+ premium items</p>
     </div>
+    
+    <CategorySection />
+    
+    <div style="margin-top: 2rem;"></div>
+    
+    <AIRecommendations />
+
+    <div style="margin-top: 2rem;"></div>
+
     <ProductGrid />
   </div>
 </template>
 
 <script setup>
+import CategorySection from '../components/CategorySection.vue';
+import AIRecommendations from '../components/AIRecommendations.vue';
 import ProductGrid from '../components/ProductGrid.vue';
 </script>
 

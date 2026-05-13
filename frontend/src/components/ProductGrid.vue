@@ -31,7 +31,7 @@
       <article
         v-for="product in visibleProducts"
         :key="product.id"
-        class="product-card glass-card"
+        :class="['product-card', 'glass-card', { 'sponsored-card': product.isSponsored }]"
       >
         <div class="product-img">
           <img :src="product.imageUrl" :alt="product.name" loading="lazy" />
@@ -90,10 +90,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useCartStore } from '../store/cart';
+import { useAdvertisementStore } from '../store/advertisement';
 
+const route = useRoute();
+const router = useRouter();
 const cart = useCartStore();
+const adStore = useAdvertisementStore();
 const products = ref([]);
 const loading = ref(true);
 const page = ref(1);
@@ -102,14 +107,41 @@ const totalProducts = ref(0);
 const addedId = ref(null);
 
 const categories = ['All', 'electronics', 'fashion', 'home', 'beauty', 'toys', 'sports', 'books', 'groceries', 'gaming', 'automotive'];
-const activeCategory = ref('All');
+const activeCategory = ref(route.query.category || 'All');
 
-const visibleProducts = computed(() => products.value);
+const visibleProducts = computed(() => {
+  const prods = [...products.value];
+  const rank2 = adStore.rank2Product;
+  
+  if (rank2) {
+    const sponsoredItem = {
+      id: `sponsored-${rank2.id}`,
+      name: rank2.product,
+      price: rank2.amount * 2, // Mock retail price based on bid
+      imageUrl: rank2.imageUrl,
+      description: rank2.description,
+      category: 'Sponsored',
+      inventoryCount: 99,
+      liveInventory: 99,
+      isSponsored: true
+    };
+    
+    // Insert at index 0
+    return [sponsoredItem, ...prods];
+  }
+  return prods;
+});
 
 const setCategory = (cat) => {
-  activeCategory.value = cat;
-  fetchProducts(true);
+  // Instead of fetching directly, we update the route which triggers the watcher
+  router.push({ query: { ...route.query, category: cat } });
 };
+
+// Watch for route query changes
+watch(() => route.query.category, (newCat) => {
+  activeCategory.value = newCat || 'All';
+  fetchProducts(true);
+});
 
 const fetchProducts = async (reset = false) => {
   if (reset) { page.value = 1; }
@@ -119,7 +151,11 @@ const fetchProducts = async (reset = false) => {
     const res = await fetch(`http://localhost:5000/api/products?page=${page.value}&limit=${pageSize}${catQuery}`);
     if (!res.ok) throw new Error('API error');
     const data = await res.json();
-    data.products.forEach(p => p.liveInventory = p.inventoryCount); // Init live inventory for WebSocket simulation
+    
+    // If API returns 0 items, throw to fallback so demo never looks empty
+    if (data.products.length === 0) throw new Error('Empty Database');
+
+    data.products.forEach(p => p.liveInventory = p.inventoryCount);
     if (reset) {
       products.value = data.products;
     } else {
@@ -127,7 +163,6 @@ const fetchProducts = async (reset = false) => {
     }
     totalProducts.value = data.total;
     
-    // Simulate Real-Time WebSocket Inventory Sync
     if (window.inventorySyncInterval) clearInterval(window.inventorySyncInterval);
     window.inventorySyncInterval = setInterval(() => {
       if (products.value.length > 0) {
@@ -139,11 +174,16 @@ const fetchProducts = async (reset = false) => {
     }, 4500);
 
   } catch {
+    // Demo fallback data if database is missing or empty for this category
+    const dummyCat = activeCategory.value === 'All' ? 'electronics' : activeCategory.value;
     if (reset) {
       products.value = [
-        { id: 1, name: 'Sample Product', category: 'electronics', description: 'Start your backend to see 10,000+ items', price: 999, inventoryCount: 10, imageUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=300&fit=crop' },
+        { id: 101, name: `Premium ${dummyCat} Item 1`, category: dummyCat, description: 'High quality premium item. Connect backend for full 10,000+ catalog.', price: 1499, inventoryCount: 12, imageUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=300&fit=crop', liveInventory: 12 },
+        { id: 102, name: `Luxury ${dummyCat} Item 2`, category: dummyCat, description: 'Exclusive design.', price: 2999, inventoryCount: 5, imageUrl: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=300&fit=crop', liveInventory: 5 },
+        { id: 103, name: `Essential ${dummyCat} Item 3`, category: dummyCat, description: 'Everyday must-have.', price: 899, inventoryCount: 50, imageUrl: 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=400&h=300&fit=crop', liveInventory: 50 },
+        { id: 104, name: `Pro ${dummyCat} Item 4`, category: dummyCat, description: 'Professional grade equipment.', price: 5999, inventoryCount: 2, imageUrl: 'https://images.unsplash.com/photo-1505843490538-5133c6c7d0e1?w=400&h=300&fit=crop', liveInventory: 2 },
       ];
-      totalProducts.value = 1;
+      totalProducts.value = 4;
     }
   } finally {
     loading.value = false;
@@ -306,6 +346,29 @@ onMounted(() => fetchProducts(true));
 
 .product-card:hover {
   transform: translateY(-6px);
+}
+
+.sponsored-card {
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.1);
+  position: relative;
+}
+
+.sponsored-card::before {
+  content: 'Sponsored #2';
+  position: absolute;
+  top: -10px;
+  right: 15px;
+  background: var(--accent-violet); /* Gold */
+  color: var(--bg-void);
+  font-size: 0.6rem;
+  font-weight: 800;
+  padding: 0.1rem 0.6rem;
+  border-radius: var(--radius-full);
+  z-index: 20;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
 }
 
 .product-img {

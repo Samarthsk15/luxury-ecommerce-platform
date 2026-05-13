@@ -63,6 +63,59 @@
   --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
+/* Mood-Based Engine Themes */
+[data-theme="gaming"] {
+  --bg-void: #0a0510;
+  --bg-surface: #120a1a;
+  --bg-card: rgba(0, 255, 204, 0.03);
+  --bg-card-hover: rgba(0, 255, 204, 0.08);
+  --accent-blue: #00ffcc;
+  --accent-violet: #ff00ff;
+  --accent-gradient: linear-gradient(135deg, #00ffcc, #ff00ff);
+  --accent-glow: rgba(0, 255, 204, 0.2);
+  --accent-glow-violet: rgba(255, 0, 255, 0.25);
+  --text-primary: #ffffff;
+  --text-accent: #00ffcc;
+  --border-glass: rgba(0, 255, 204, 0.1);
+  --border-glass-hover: rgba(0, 255, 204, 0.3);
+  --font-headline: 'Montserrat', system-ui, sans-serif;
+}
+
+[data-theme="minimal"] {
+  --bg-void: #ffffff;
+  --bg-surface: #f9f9f9;
+  --bg-elevated: #ffffff;
+  --bg-card: rgba(0, 0, 0, 0.02);
+  --bg-card-hover: rgba(0, 0, 0, 0.05);
+  --accent-blue: #000000;
+  --accent-violet: #333333;
+  --accent-gradient: linear-gradient(135deg, #000000, #333333);
+  --accent-glow: rgba(0, 0, 0, 0.05);
+  --accent-glow-violet: rgba(0, 0, 0, 0.05);
+  --text-primary: #000000;
+  --text-secondary: rgba(0, 0, 0, 0.6);
+  --text-muted: rgba(0, 0, 0, 0.4);
+  --text-accent: #000000;
+  --border-glass: rgba(0, 0, 0, 0.08);
+  --border-glass-hover: rgba(0, 0, 0, 0.15);
+  --border-accent: rgba(0, 0, 0, 0.2);
+  --font-headline: 'Montserrat', system-ui, sans-serif;
+}
+
+[data-theme="festival"] {
+  --bg-void: #1a0505;
+  --bg-surface: #240a0a;
+  --accent-blue: #ffae00;
+  --accent-violet: #ff4d00;
+  --accent-gradient: linear-gradient(135deg, #ffae00, #ff4d00);
+  --accent-glow: rgba(255, 174, 0, 0.2);
+  --accent-glow-violet: rgba(255, 77, 0, 0.25);
+  --text-primary: #ffffff;
+  --text-accent: #ffae00;
+  --border-glass: rgba(255, 174, 0, 0.1);
+  --border-glass-hover: rgba(255, 174, 0, 0.3);
+}
+
 /* ===== RESET & BASE ===== */
 *, *::before, *::after {
   margin: 0;

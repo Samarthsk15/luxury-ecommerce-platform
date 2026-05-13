@@ -9,12 +9,12 @@
 
     <div class="hero-content">
       <div class="hero-text animate-in" style="--d:0">
-        <h1 class="hero-title">
-          <span class="title-line">Elegance</span>
-          <span class="title-line italic">Redefined.</span>
+        <h1 class="hero-title" :key="adStore.rank1Product?.id">
+          <span class="title-line">{{ adStore.rank1Product?.product.split(' ')[0] }}</span>
+          <span class="title-line italic">{{ adStore.rank1Product?.product.split(' ').slice(1).join(' ') || 'Redefined.' }}</span>
         </h1>
-        <p class="hero-subtitle animate-in" style="--d:1">
-          Discover a curated collection of premium artifacts designed for the modern connoisseur. Experience unparalleled craftsmanship and exclusive design.
+        <p class="hero-subtitle animate-in" style="--d:1" :key="'desc' + adStore.rank1Product?.id">
+          {{ adStore.rank1Product?.description }}
         </p>
         <div class="hero-actions animate-in" style="--d:2">
           <button class="btn-luxury" @click="$router.push('/products')">
@@ -32,12 +32,12 @@
           <div class="glass-reflection"></div>
           <!-- 3D Model or High-End Image -->
           <div class="visual-inner">
-             <img src="https://images.unsplash.com/photo-1611085583191-a3b181a88401?auto=format&fit=crop&q=80&w=800" alt="Luxury Item" class="luxury-item-img" />
+             <img :src="adStore.rank1Product?.imageUrl" alt="Premium Promoted Item" class="luxury-item-img" :key="adStore.rank1Product?.id" />
           </div>
           
           <div class="floating-badge badge-1 glass">
-            <span class="badge-icon">✧</span>
-            <span class="badge-text">Artisan Crafted</span>
+            <span class="badge-icon">👑</span>
+            <span class="badge-text">Sponsored #1</span>
           </div>
           
           <div class="floating-badge badge-2 glass">
@@ -50,8 +50,10 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import { useAdvertisementStore } from '../store/advertisement';
 
+const adStore = useAdvertisementStore();
 const showcase = ref(null);
 
 const handleMouseMove = (e) => {

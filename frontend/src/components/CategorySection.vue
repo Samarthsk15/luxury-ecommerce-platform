@@ -10,6 +10,7 @@
         :key="cat.slug"
         :to="`/products?category=${cat.slug}`"
         class="cat-tile glass-card"
+        @click="trackClick(cat.slug)"
       >
         <span class="cat-icon">{{ cat.icon }}</span>
         <span class="cat-name">{{ cat.name }}</span>
@@ -20,6 +21,10 @@
 </template>
 
 <script setup>
+import { useBehaviorStore } from '../store/behavior';
+
+const behaviorStore = useBehaviorStore();
+
 const categories = [
   { name: 'Electronics', slug: 'electronics', icon: '🔌', count: '1,200' },
   { name: 'Fashion', slug: 'fashion', icon: '👗', count: '2,400' },
@@ -32,6 +37,15 @@ const categories = [
   { name: 'Groceries', slug: 'groceries', icon: '🛒', count: '3,200' },
   { name: 'Toys', slug: 'toys', icon: '🧸', count: '780' },
 ];
+
+const trackClick = (slug) => {
+  // Translate standard categories into our targeted recommendation buckets
+  let targetBucket = 'premium'; // Default
+  if (slug === 'gaming') targetBucket = 'gaming';
+  if (slug === 'electronics') targetBucket = 'audio';
+  
+  behaviorStore.trackInteraction(targetBucket);
+};
 </script>
 
 <style scoped>

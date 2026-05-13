@@ -13,7 +13,18 @@
         <router-link to="/deals" class="nav-item" active-class="active">Deals</router-link>
         <router-link to="/products" class="nav-item" active-class="active">Discover</router-link>
         <router-link to="/cart" class="nav-item" active-class="active">Cart</router-link>
+        <router-link v-if="authStore.isAdmin" to="/admin" class="nav-item" active-class="active">Admin</router-link>
       </nav>
+
+      <!-- Theme Selector -->
+      <div class="theme-selector">
+        <select :value="themeStore.currentMood" @change="changeMood" class="mood-select">
+          <option value="luxury">Luxury Mood</option>
+          <option value="gaming">Gaming Mood</option>
+          <option value="minimal">Minimal Mood</option>
+          <option value="festival">Festival Mood</option>
+        </select>
+      </div>
 
       <!-- Search -->
       <form class="search-box" @submit.prevent="doSearch">
@@ -43,10 +54,12 @@
 import { ref, computed } from 'vue';
 import { useCartStore } from '../store/cart';
 import { useAuthStore } from '../store/auth.js';
+import { useThemeStore } from '../store/theme.js';
 import { useRouter } from 'vue-router';
 
 const cartStore = useCartStore();
 const authStore = useAuthStore();
+const themeStore = useThemeStore();
 const router = useRouter();
 const query = ref('');
 
@@ -60,6 +73,21 @@ const doSearch = () => {
   if (query.value.trim()) {
     router.push({ path: '/products', query: { search: query.value } });
   }
+};
+
+const changeMood = (event) => {
+  const mood = event.target.value;
+  themeStore.setMood(mood);
+  
+  if (mood === 'luxury') return; // Luxury is just the baseline theme, don't force a category filter
+  
+  let targetCategory = 'All';
+  if (mood === 'gaming') targetCategory = 'gaming';
+  if (mood === 'minimal') targetCategory = 'home';
+  if (mood === 'festival') targetCategory = 'fashion';
+  
+  // Navigate directly to the products page filtered by this theme's vibe
+  router.push({ path: '/products', query: { category: targetCategory } });
 };
 
 const isListening = ref(false);
@@ -167,6 +195,31 @@ const logout = () => {
 .nav-item.active {
   color: var(--text-primary);
   background: rgba(212, 175, 55, 0.1);
+}
+
+/* Theme Selector */
+.mood-select {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  border: 1px solid var(--border-glass);
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--radius-full);
+  font-family: var(--font-headline);
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.3s;
+}
+
+.mood-select:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--border-glass-hover);
+}
+
+.mood-select option {
+  background: #111;
+  color: white;
 }
 
 /* Search */

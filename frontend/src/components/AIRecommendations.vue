@@ -2,8 +2,8 @@
   <section class="ai-recommendations">
     <div class="ai-header">
       <span class="ai-icon">✨</span>
-      <h2>AI Personalized For You</h2>
-      <p>Based on your browsing history and predicted preferences</p>
+      <h2>Smart Product Suggestions</h2>
+      <p>AI-inspired recommendation logic is integrated for personalized shopping experience.</p>
     </div>
     
     <div class="recommendations-container">
@@ -23,21 +23,47 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useCartStore } from '../store/cart';
+import { useBehaviorStore } from '../store/behavior';
 
 const cart = useCartStore();
+const behaviorStore = useBehaviorStore();
 const recommended = ref([]);
 
+// Simulated catalog of products grouped by category
+const catalog = {
+  premium: [
+    { id: 991, name: 'Smart Home Hub 2.0', price: 4999, match: 98, imageUrl: 'https://images.unsplash.com/photo-1558089687-f282ffcbc126?w=400&h=300&fit=crop' },
+    { id: 992, name: 'Noise Cancelling Headphones', price: 12999, match: 94, imageUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=300&fit=crop' },
+    { id: 993, name: 'Ergonomic Desk Chair', price: 8500, match: 89, imageUrl: 'https://images.unsplash.com/photo-1505843490538-5133c6c7d0e1?w=400&h=300&fit=crop' },
+  ],
+  gaming: [
+    { id: 801, name: 'Mechanical Gaming Keyboard', price: 6500, match: 96, imageUrl: 'https://images.unsplash.com/photo-1595225476474-87563907a212?w=400&h=300&fit=crop' },
+    { id: 802, name: 'Ultra-Wide Gaming Monitor', price: 32000, match: 91, imageUrl: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=400&h=300&fit=crop' },
+    { id: 803, name: 'Pro Wireless Mouse', price: 4200, match: 88, imageUrl: 'https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=400&h=300&fit=crop' },
+  ],
+  audio: [
+    { id: 701, name: 'Studio Reference Monitors', price: 18500, match: 97, imageUrl: 'https://images.unsplash.com/photo-1545127398-14699f92334b?w=400&h=300&fit=crop' },
+    { id: 702, name: 'High-Fidelity DAC', price: 9000, match: 93, imageUrl: 'https://images.unsplash.com/photo-1583394838336-acd977736f90?w=400&h=300&fit=crop' },
+    { id: 703, name: 'Audiophile Over-Ears', price: 22000, match: 89, imageUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=300&fit=crop' },
+  ]
+};
+
+const updateRecommendations = () => {
+  const cat = behaviorStore.dominantCategory || 'premium';
+  recommended.value = catalog[cat] || catalog['premium'];
+};
+
 onMounted(() => {
-  // Simulating an AI recommendation engine fetching personalized data
   setTimeout(() => {
-    recommended.value = [
-      { id: 991, name: 'Smart Home Hub 2.0', price: 4999, match: 98, imageUrl: 'https://images.unsplash.com/photo-1558089687-f282ffcbc126?w=400&h=300&fit=crop' },
-      { id: 992, name: 'Noise Cancelling Headphones', price: 12999, match: 94, imageUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=300&fit=crop' },
-      { id: 993, name: 'Ergonomic Desk Chair', price: 8500, match: 89, imageUrl: 'https://images.unsplash.com/photo-1505843490538-5133c6c7d0e1?w=400&h=300&fit=crop' },
-    ];
-  }, 1000);
+    updateRecommendations();
+  }, 500);
+});
+
+// Reactively watch for user behavior changes across the app
+watch(() => behaviorStore.dominantCategory, () => {
+  updateRecommendations();
 });
 
 const addToCart = (item) => {

@@ -13,6 +13,7 @@ const routes = [
   { path: '/checkout', name: 'Checkout', component: () => import('../pages/CheckoutPage.vue'), meta: { requiresAuth: true } },
   { path: '/deals', name: 'Deals', component: OffersPage, meta: { requiresAuth: true } },
   { path: '/products', name: 'Products', component: ProductsPage, meta: { requiresAuth: true } },
+  { path: '/admin', name: 'Admin', component: () => import('../pages/AdminDashboard.vue'), meta: { requiresAuth: true, requiresAdmin: true } },
 ];
 
 const router = createRouter({
@@ -28,6 +29,9 @@ router.beforeEach((to, from, next) => {
 
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next('/login');
+  } else if (to.meta.requiresAdmin && !authStore.isAdmin) {
+    alert("Access Denied: Administrator privileges required.");
+    next('/');
   } else {
     next();
   }

@@ -6,6 +6,7 @@ export const useAuthStore = defineStore('auth', () => {
   const token = ref(localStorage.getItem('token') || null);
 
   const isAuthenticated = computed(() => !!token.value);
+  const isAdmin = computed(() => user.value?.role === 'Admin');
 
   const login = async (email, password) => {
     try {
@@ -38,14 +39,14 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
-  const register = async (name, email, password) => {
+  const register = async (name, email, password, phone, address) => {
     try {
       const response = await fetch('http://localhost:5000/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, phone, address }),
       });
 
       const data = await response.json().catch(() => null);
@@ -69,6 +70,30 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
+  const googleLogin = (accessToken) => {
+    user.value = {
+      id: 999,
+      name: 'Google User',
+      email: 'user@google.com',
+      role: 'User',
+    };
+    token.value = 'mock-google-jwt-' + accessToken;
+    localStorage.setItem('token', token.value);
+    return { success: true };
+  };
+
+  const demoAdminLogin = () => {
+    user.value = {
+      id: 1,
+      name: 'Luxe Admin',
+      email: 'admin@luxe.com',
+      role: 'Admin',
+    };
+    token.value = 'mock-admin-jwt';
+    localStorage.setItem('token', token.value);
+    return { success: true };
+  };
+
   const logout = () => {
     user.value = null;
     token.value = null;
@@ -87,8 +112,11 @@ export const useAuthStore = defineStore('auth', () => {
     user,
     token,
     isAuthenticated,
+    isAdmin,
     login,
     register,
+    googleLogin,
+    demoAdminLogin,
     logout,
     checkAuth,
   };

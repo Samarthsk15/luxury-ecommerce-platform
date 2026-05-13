@@ -23,9 +23,19 @@
 
         <!-- Login / Register Step -->
         <form v-else @submit.prevent="handleSubmit" class="form-wrapper animate-in">
-          <div v-if="isRegister" class="input-group">
+          <div v-if="isRegister && !isAdminLogin" class="input-group">
             <span class="input-icon">👤</span>
             <input v-model="name" type="text" placeholder="Enter your full name" required />
+          </div>
+
+          <div v-if="isRegister && !isAdminLogin" class="input-group">
+            <span class="input-icon">📱</span>
+            <input v-model="phone" type="tel" placeholder="Enter your phone number (10 digits)" required />
+          </div>
+
+          <div v-if="isRegister && !isAdminLogin" class="input-group">
+            <span class="input-icon">🏠</span>
+            <input v-model="address" type="text" placeholder="Enter your full shipping address" required />
           </div>
 
           <div class="input-group">
@@ -39,20 +49,20 @@
             <span class="input-icon-right">🔵</span>
           </div>
 
-          <button type="submit" class="submit-btn" :disabled="submitting">
+          <button type="submit" class="submit-btn" :disabled="submitting" :style="isAdminLogin ? 'background: rgba(212, 175, 55, 0.2); border-color: rgba(212, 175, 55, 0.5); color: #d4af37;' : ''">
             <span v-if="submitting" class="spinner"></span>
-            <span v-else>{{ isRegister ? 'Sign up' : 'Log in' }}</span>
+            <span v-else>{{ isAdminLogin ? 'Secure Admin Login' : (isRegister ? 'Sign up' : 'Log in') }}</span>
           </button>
 
-          <div class="social-login">
+          <div v-if="!isAdminLogin" class="social-login">
             <button type="button" class="social-btn">
               <span class="s-icon">f</span> Facebook
             </button>
             <button type="button" class="social-btn" @click="handleGoogleOAuth">
               <span class="s-icon">G</span> Google
             </button>
-            <button type="button" class="social-btn">
-              <span class="s-icon"></span> Apple
+            <button type="button" class="social-btn" @click="toggleAdminMode">
+              <span class="s-icon">👑</span> Admin
             </button>
           </div>
         </form>
@@ -60,6 +70,10 @@
         <div class="footer-toggle">
           <template v-if="isVerification">
             Didn't receive the email? <a href="#" @click.prevent="resendCode">Click to resend</a>
+          </template>
+          <template v-else-if="isAdminLogin">
+            Not an administrator?
+            <a href="#" @click.prevent="toggleAdminMode">Return to user login</a>
           </template>
           <template v-else>
             {{ isRegister ? 'Already have an account?' : "Didn't have an account?" }}
@@ -81,9 +95,12 @@ const router = useRouter();
 
 const isRegister = ref(false);
 const isVerification = ref(false);
+const isAdminLogin = ref(false);
 
 const name = ref('');
 const email = ref('');
+const phone = ref('');
+const address = ref('');
 const password = ref('');
 const verificationCode = ref('');
 const error = ref('');
@@ -91,12 +108,16 @@ const submitting = ref(false);
 
 const titleText = computed(() => {
   if (isVerification.value) return 'Check your email';
+  if (isAdminLogin.value) return 'Admin Portal';
   return isRegister.value ? 'Sign up' : 'Log in';
 });
 
 const subtitleText = computed(() => {
   if (isVerification.value) {
     return `We sent a verification link to ${email.value}. Please enter the code below to verify your account.`;
+  }
+  if (isAdminLogin.value) {
+    return 'Secure access for authorized administrators only.';
   }
   if (isRegister.value) {
     return 'Create your account and seamlessly start managing your projects, ideas, and progress.';
@@ -109,36 +130,57 @@ const toggleMode = () => {
   error.value = '';
 };
 
+const toggleAdminMode = () => {
+  isAdminLogin.value = !isAdminLogin.value;
+  isRegister.value = false;
+  error.value = '';
+  email.value = '';
+  password.value = '';
+  phone.value = '';
+  address.value = '';
+};
+
 const handleGoogleOAuth = () => {
   if (window.google) {
-    // Initialize the Google OAuth 2.0 Token Client
     const client = window.google.accounts.oauth2.initTokenClient({
-      // NOTE: Replace this with your actual Google Cloud Console Client ID!
       client_id: '552180619464-lmc0nh71d180akcll4tvg9c6pgrbq3pt.apps.googleusercontent.com',
       scope: 'email profile',
       callback: (response) => {
-        console.log('Google Auth Response:', response);
         if (response.access_token) {
-          alert('Google Sign-In successful!');
-          // Call authStore.googleLogin(response.access_token) here
+          authStore.googleLogin(response.access_token);
           router.push('/');
         }
       },
     });
-    
-    // Trigger the popup showing the signed-in Google accounts
     client.requestAccessToken();
   } else {
-    alert('Google Identity Services not loaded yet. Please refresh the page.');
+    // If the script is missing, simulate a successful Google Login for testing
+    authStore.googleLogin('simulated-token');
+    router.push('/');
   }
 };
 
 const handleSubmit = async () => {
   error.value = '';
 
-  if (isRegister.value && name.value.trim().length < 3) {
-    error.value = 'Name must be at least 3 characters.';
-    return;
+  if (isRegister.value && !isAdminLogin.value) {
+    if (name.value.trim().length < 3) {
+      error.value = 'Name must be at least 3 characters.';
+      return;
+    }
+    
+    // Phone validation: must contain exactly 10 digits
+    const digitsOnly = phone.value.replace(/\D/g, '');
+    if (digitsOnly.length !== 10) {
+      error.value = 'Please enter a valid 10-digit phone number.';
+      return;
+    }
+    
+    // Address validation: minimum length
+    if (address.value.trim().length < 10) {
+      error.value = 'Please enter a complete shipping address (minimum 10 characters).';
+      return;
+    }
   }
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email.value)) {
@@ -153,7 +195,17 @@ const handleSubmit = async () => {
   submitting.value = true;
 
   try {
-    if (isRegister.value) {
+    if (isAdminLogin.value) {
+      // Simulate Admin Verification for Presentation
+      if (email.value.includes('admin') && password.value === 'admin123') {
+        await new Promise(res => setTimeout(res, 800));
+        authStore.demoAdminLogin();
+        router.push('/admin');
+      } else {
+        await new Promise(res => setTimeout(res, 800));
+        error.value = 'Invalid administrator credentials. (Hint: admin@luxe.com / admin123)';
+      }
+    } else if (isRegister.value) {
       // Simulate sending verification email
       await new Promise(res => setTimeout(res, 1000));
       isVerification.value = true;
@@ -178,7 +230,7 @@ const handleVerification = async () => {
   try {
     // Simulate verifying code and registering user
     await new Promise(res => setTimeout(res, 1500));
-    const result = await authStore.register(name.value, email.value, password.value);
+    const result = await authStore.register(name.value, email.value, password.value, phone.value, address.value);
     
     if (result.success) {
       router.push('/');
