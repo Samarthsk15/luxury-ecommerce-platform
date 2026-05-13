@@ -55,7 +55,7 @@
           <span>Total</span>
           <span class="total-price">₹{{ Math.round(cartStore.totalAmount * 1.18).toLocaleString('en-IN') }}</span>
         </div>
-        <button class="checkout-btn">Proceed to Checkout</button>
+        <button class="checkout-btn" @click="$router.push('/checkout')" v-magnetic>Proceed to Checkout</button>
         <router-link to="/" class="continue-link">← Continue Shopping</router-link>
       </aside>
     </div>

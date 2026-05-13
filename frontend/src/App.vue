@@ -1,7 +1,7 @@
 <template>
   <div id="app-root">
     <HeaderComponent v-if="authStore.isAuthenticated && route?.name !== 'Login'" />
-    <main :class="['page-view', { 'full-bleed': route?.name === 'Login' }]">
+    <main :class="['page-view', { 'full-bleed': route?.name === 'Login' || route?.name === 'Home' }]">
       <router-view v-slot="{ Component }">
         <transition name="page" mode="out-in">
           <component :is="Component" :key="route?.fullPath" />

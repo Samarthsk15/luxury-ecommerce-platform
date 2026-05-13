@@ -62,8 +62,19 @@ const error = ref('');
 const showRegister = ref(false);
 
 const submitLogin = async () => {
-  loading.value = true;
   error.value = '';
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email.value)) {
+    error.value = 'Please enter a valid email address.';
+    return;
+  }
+  if (!password.value) {
+    error.value = 'Please enter your password.';
+    return;
+  }
+
+  loading.value = true;
 
   const result = await authStore.login(email.value, password.value);
 
@@ -77,8 +88,23 @@ const submitLogin = async () => {
 };
 
 const submitRegister = async () => {
-  loading.value = true;
   error.value = '';
+
+  if (registerName.value.trim().length < 3) {
+    error.value = 'Name must be at least 3 characters.';
+    return;
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(registerEmail.value)) {
+    error.value = 'Please enter a valid email address.';
+    return;
+  }
+  if (registerPassword.value.length < 6) {
+    error.value = 'Password must be at least 6 characters.';
+    return;
+  }
+
+  loading.value = true;
 
   const result = await authStore.register(registerName.value, registerEmail.value, registerPassword.value);
 

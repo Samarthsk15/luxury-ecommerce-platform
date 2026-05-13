@@ -1,7 +1,7 @@
 <template>
   <div class="deals-page">
     <!-- Flash Sale Banner -->
-    <section class="flash-banner">
+    <section class="flash-banner" v-scroll-reveal>
       <div class="flash-glow-left"></div>
       <div class="flash-glow-right"></div>
       <div class="flash-content">
@@ -28,7 +28,7 @@
     </section>
 
     <!-- Best Deals -->
-    <section class="deals-section">
+    <section class="deals-section" v-scroll-reveal>
       <h2 class="section-title">Today's Best Deals</h2>
       <div class="deal-grid">
         <article v-for="deal in deals" :key="deal.id" class="deal-item glass-card">
@@ -43,14 +43,14 @@
               <span class="now">₹{{ deal.sale.toLocaleString() }}</span>
               <span class="was">₹{{ deal.original.toLocaleString() }}</span>
             </div>
-            <button class="deal-add" @click="addToCart(deal)">Add to Cart</button>
+            <button class="deal-add" @click="addToCart(deal)" v-magnetic>Add to Cart</button>
           </div>
         </article>
       </div>
     </section>
 
     <!-- Clearance -->
-    <section class="deals-section">
+    <section class="deals-section" v-scroll-reveal>
       <h2 class="section-title">Clearance Picks</h2>
       <div class="clearance-row">
         <div v-for="item in clearance" :key="item.id" class="clearance-card glass-card">

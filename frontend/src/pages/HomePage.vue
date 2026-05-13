@@ -1,25 +1,29 @@
 <template>
-  <div class="home-page">
-    <HeroBanner />
-    <CategorySection />
-    <DealsOfTheDay />
-    <FlashSale />
-    <ProductGrid />
+  <div class="home-page luxury-theme">
+    <WelcomeModal />
+    <LuxuryHero />
+    <BrandStory />
+    <PremiumShowcase />
+    <MembershipCTA />
   </div>
 </template>
 
 <script setup>
-import HeroBanner from '../components/HeroBanner.vue';
-import CategorySection from '../components/CategorySection.vue';
-import DealsOfTheDay from '../components/DealsOfTheDay.vue';
-import FlashSale from '../components/FlashSale.vue';
-import ProductGrid from '../components/ProductGrid.vue';
+import WelcomeModal from '../components/WelcomeModal.vue';
+import LuxuryHero from '../components/LuxuryHero.vue';
+import BrandStory from '../components/BrandStory.vue';
+import PremiumShowcase from '../components/PremiumShowcase.vue';
+import MembershipCTA from '../components/MembershipCTA.vue';
 </script>
 
 <style scoped>
 .home-page {
   display: flex;
   flex-direction: column;
-  gap: var(--space-xl);
+  background: var(--bg-void);
+}
+
+.luxury-theme {
+  --space-xl: 6rem;
 }
 </style>

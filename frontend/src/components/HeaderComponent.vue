@@ -19,6 +19,7 @@
       <form class="search-box" @submit.prevent="doSearch">
         <span class="search-icon">🔍</span>
         <input v-model="query" type="text" placeholder="Search premium products..." />
+        <button type="button" class="mic-btn" @click="startVoiceSearch" :class="{ listening: isListening }" title="Voice Search">🎙️</button>
       </form>
 
       <!-- Right Actions -->
@@ -59,6 +60,35 @@ const doSearch = () => {
   if (query.value.trim()) {
     router.push({ path: '/products', query: { search: query.value } });
   }
+};
+
+const isListening = ref(false);
+const startVoiceSearch = () => {
+  if (!('webkitSpeechRecognition' in window)) {
+    alert("Voice search is not supported in your browser.");
+    return;
+  }
+  const recognition = new window.webkitSpeechRecognition();
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.lang = 'en-US';
+
+  recognition.onstart = () => {
+    isListening.value = true;
+  };
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript;
+    query.value = transcript;
+    doSearch();
+  };
+  recognition.onerror = (event) => {
+    console.error("Speech recognition error", event.error);
+    isListening.value = false;
+  };
+  recognition.onend = () => {
+    isListening.value = false;
+  };
+  recognition.start();
 };
 
 const logout = () => {
@@ -136,7 +166,7 @@ const logout = () => {
 
 .nav-item.active {
   color: var(--text-primary);
-  background: rgba(46, 91, 255, 0.12);
+  background: rgba(212, 175, 55, 0.1);
 }
 
 /* Search */
@@ -154,8 +184,8 @@ const logout = () => {
 }
 
 .search-box:focus-within {
-  border-color: var(--accent-blue);
-  box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.1);
+  border-color: var(--accent-violet);
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
   background: rgba(255, 255, 255, 0.07);
 }
 
@@ -174,6 +204,32 @@ const logout = () => {
 
 .search-box input::placeholder {
   color: var(--text-muted);
+}
+
+.mic-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: all 0.3s ease;
+  padding: 0 0.5rem;
+}
+
+.mic-btn:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.mic-btn.listening {
+  opacity: 1;
+  animation: mic-pulse 1.5s infinite;
+}
+
+@keyframes mic-pulse {
+  0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(239, 68, 68, 0)); }
+  50% { transform: scale(1.2); filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.8)); }
+  100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(239, 68, 68, 0)); }
 }
 
 /* Actions */
@@ -213,8 +269,8 @@ const logout = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--accent-blue);
-  color: white;
+  background: var(--accent-violet);
+  color: var(--bg-void);
   font-size: 0.65rem;
   font-weight: 700;
   border-radius: var(--radius-full);

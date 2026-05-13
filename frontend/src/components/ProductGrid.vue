@@ -14,6 +14,7 @@
         :key="cat"
         :class="['filter-chip', { active: activeCategory === cat }]"
         @click="setCategory(cat)"
+        v-magnetic
       >
         {{ cat === 'All' ? 'All' : cat.charAt(0).toUpperCase() + cat.slice(1) }}
       </button>
@@ -35,17 +36,22 @@
         <div class="product-img">
           <img :src="product.imageUrl" :alt="product.name" loading="lazy" />
           <span class="product-badge">{{ product.category }}</span>
+          <button class="ar-btn" title="View in 3D / AR" @click.stop="openAR(product)"><span class="ar-icon">🧊</span> AR</button>
         </div>
         <div class="product-body">
           <h3 class="product-name">{{ product.name }}</h3>
+          <p class="live-stock-indicator" v-if="product.liveInventory !== undefined && product.liveInventory < 15 && product.liveInventory > 0">
+            <span class="pulse-dot"></span> Only {{ product.liveInventory }} left (Live Sync)
+          </p>
           <p class="product-desc">{{ (product.description || '').substring(0, 60) }}</p>
           <div class="product-footer">
             <span class="product-price">₹{{ product.price.toLocaleString('en-IN') }}</span>
             <button
               class="add-btn"
               :class="{ added: addedId === product.id }"
-              @click="addToCart(product)"
+              @click="addToCart(product, $event)"
               :disabled="product.inventoryCount === 0"
+              v-magnetic
             >
               {{ product.inventoryCount === 0 ? 'Sold Out' : (addedId === product.id ? '✓ Added' : 'Add') }}
             </button>
@@ -56,10 +62,29 @@
 
     <!-- Load More -->
     <div v-if="visibleProducts.length < totalProducts && !loading" class="load-more">
-      <button @click="loadMore" class="load-more-btn">Load More Products</button>
+      <button @click="loadMore" class="load-more-btn" v-magnetic>Load More Products</button>
     </div>
     <div v-if="loading && visibleProducts.length > 0" class="load-more">
       <div class="spinner small"></div>
+    </div>
+
+    <!-- AR Modal -->
+    <div v-if="showARModal" class="ar-modal-overlay" @click.self="closeAR">
+      <div class="ar-modal-content">
+        <button class="close-ar-btn" @click="closeAR">✕</button>
+        <h3 class="ar-title">3D Preview: {{ selectedARProduct?.name }}</h3>
+        <model-viewer 
+          :src="currentARModel" 
+          ar 
+          ar-modes="webxr scene-viewer quick-look" 
+          camera-controls 
+          touch-action="pan-y"
+          auto-rotate 
+          shadow-intensity="1"
+          class="viewer">
+        </model-viewer>
+        <p class="ar-hint">Drag to rotate. Scroll to zoom. Click the AR icon on mobile to view in your space!</p>
+      </div>
     </div>
   </section>
 </template>
@@ -94,12 +119,25 @@ const fetchProducts = async (reset = false) => {
     const res = await fetch(`http://localhost:5000/api/products?page=${page.value}&limit=${pageSize}${catQuery}`);
     if (!res.ok) throw new Error('API error');
     const data = await res.json();
+    data.products.forEach(p => p.liveInventory = p.inventoryCount); // Init live inventory for WebSocket simulation
     if (reset) {
       products.value = data.products;
     } else {
       products.value = [...products.value, ...data.products];
     }
     totalProducts.value = data.total;
+    
+    // Simulate Real-Time WebSocket Inventory Sync
+    if (window.inventorySyncInterval) clearInterval(window.inventorySyncInterval);
+    window.inventorySyncInterval = setInterval(() => {
+      if (products.value.length > 0) {
+        const randomIdx = Math.floor(Math.random() * products.value.length);
+        if (products.value[randomIdx].liveInventory > 1) {
+          products.value[randomIdx].liveInventory--;
+        }
+      }
+    }, 4500);
+
   } catch {
     if (reset) {
       products.value = [
@@ -112,10 +150,90 @@ const fetchProducts = async (reset = false) => {
   }
 };
 
-const addToCart = (product) => {
+const showARModal = ref(false);
+const selectedARProduct = ref(null);
+
+const openAR = (product) => {
+  selectedARProduct.value = product;
+  showARModal.value = true;
+};
+
+const closeAR = () => {
+  showARModal.value = false;
+  selectedARProduct.value = null;
+};
+
+const currentARModel = computed(() => {
+  if (!selectedARProduct.value) return 'https://modelviewer.dev/shared-assets/models/Astronaut.glb';
+  
+  const cat = (selectedARProduct.value.category || '').toLowerCase();
+  const name = (selectedARProduct.value.name || '').toLowerCase();
+  
+  if (cat.includes('fashion') || cat.includes('clothing') || name.includes('saree') || name.includes('shoe')) {
+    return 'https://modelviewer.dev/shared-assets/models/Shoe.glb';
+  } else if (cat.includes('electronics') || cat.includes('tech') || name.includes('audio')) {
+    return 'https://modelviewer.dev/shared-assets/models/glTF-Sample-Models/2.0/BoomBox/glTF-Binary/BoomBox.glb';
+  } else if (cat.includes('home') || cat.includes('furniture') || name.includes('chair')) {
+    return 'https://modelviewer.dev/shared-assets/models/glTF-Sample-Models/2.0/Chair/glTF-Binary/Chair.glb';
+  } else if (cat.includes('toys') || cat.includes('kids') || name.includes('toy')) {
+    return 'https://modelviewer.dev/shared-assets/models/glTF-Sample-Models/2.0/ToyCar/glTF-Binary/ToyCar.glb';
+  } else if (cat.includes('sports') || cat.includes('photography') || name.includes('camera')) {
+    return 'https://modelviewer.dev/shared-assets/models/glTF-Sample-Models/2.0/AntiqueCamera/glTF-Binary/AntiqueCamera.glb';
+  }
+  
+  return 'https://modelviewer.dev/shared-assets/models/Astronaut.glb';
+});
+
+const flyToCart = (event) => {
+  if (!event || !event.currentTarget) return;
+  const btn = event.currentTarget;
+  const card = btn.closest('.product-card');
+  const img = card ? card.querySelector('img') : null;
+  
+  if (!img) return;
+
+  const imgRect = img.getBoundingClientRect();
+  const clone = img.cloneNode(true);
+  
+  clone.style.position = 'fixed';
+  clone.style.top = `${imgRect.top}px`;
+  clone.style.left = `${imgRect.left}px`;
+  clone.style.width = `${imgRect.width}px`;
+  clone.style.height = `${imgRect.height}px`;
+  clone.style.borderRadius = 'var(--radius-xl)';
+  clone.style.objectFit = 'cover';
+  clone.style.zIndex = '9999';
+  clone.style.transition = 'all 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+  clone.style.pointerEvents = 'none';
+
+  document.body.appendChild(clone);
+
+  // Trigger reflow
+  clone.getBoundingClientRect();
+
+  // Find cart icon (HeaderComponent usually has something, otherwise fallback to top right)
+  const cartIcon = document.querySelector('.header-icons') || document.body;
+  const cartRect = cartIcon.getBoundingClientRect();
+  const targetX = cartIcon.tagName === 'BODY' ? window.innerWidth - 50 : cartRect.left + cartRect.width / 2;
+  const targetY = cartIcon.tagName === 'BODY' ? 50 : cartRect.top + cartRect.height / 2;
+
+  clone.style.top = `${targetY}px`;
+  clone.style.left = `${targetX}px`;
+  clone.style.width = '20px';
+  clone.style.height = '20px';
+  clone.style.opacity = '0.2';
+  clone.style.transform = 'scale(0.1) rotate(15deg)';
+
+  setTimeout(() => {
+    clone.remove();
+  }, 700);
+};
+
+const addToCart = (product, event) => {
   if (product.inventoryCount > 0) {
     addedId.value = product.id;
     cart.addItem({ id: product.id, name: product.name, price: product.price, imageUrl: product.imageUrl });
+    flyToCart(event);
     setTimeout(() => { if (addedId.value === product.id) addedId.value = null; }, 800);
   }
 };
@@ -208,6 +326,35 @@ onMounted(() => fetchProducts(true));
   transform: scale(1.06);
 }
 
+.ar-btn {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  padding: 0.3rem 0.6rem;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.product-card:hover .ar-btn {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.ar-btn:hover {
+  background: var(--accent-blue);
+  border-color: var(--accent-blue);
+}
+
 .product-badge {
   position: absolute;
   top: 10px;
@@ -241,6 +388,30 @@ onMounted(() => fetchProducts(true));
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.live-stock-indicator {
+  font-size: 0.7rem;
+  color: #f87171;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.1rem;
+}
+
+.pulse-dot {
+  width: 6px;
+  height: 6px;
+  background-color: #f87171;
+  border-radius: 50%;
+  animation: pulse-red 1.5s infinite;
+}
+
+@keyframes pulse-red {
+  0% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0.7); }
+  70% { box-shadow: 0 0 0 6px rgba(248, 113, 113, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0); }
 }
 
 .product-desc {
@@ -334,5 +505,75 @@ onMounted(() => fetchProducts(true));
   color: var(--text-primary);
   border-color: var(--border-glass-hover);
   background: rgba(255, 255, 255, 0.08);
+}
+
+/* AR Modal */
+.ar-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.ar-modal-content {
+  position: relative;
+  width: 90%;
+  max-width: 800px;
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1px solid var(--border-glass);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+.close-ar-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  z-index: 10;
+}
+.close-ar-btn:hover { background: rgba(239, 68, 68, 0.8); }
+
+.ar-title {
+  margin-bottom: 1.5rem;
+  font-size: 1.4rem;
+  text-align: center;
+  color: white;
+  font-weight: 700;
+}
+
+.viewer {
+  width: 100%;
+  height: 50vh;
+  min-height: 400px;
+  background: radial-gradient(circle at center, rgba(46, 91, 255, 0.1) 0%, transparent 70%);
+  border-radius: var(--radius-lg);
+  outline: none;
+}
+
+.ar-hint {
+  margin-top: 1.5rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  background: rgba(255,255,255,0.05);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-full);
 }
 </style>
