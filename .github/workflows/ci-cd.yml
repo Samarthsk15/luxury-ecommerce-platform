@@ -26,6 +26,7 @@ jobs:
         dotnet-version: '10.x'
 
     - name: Build Backend
+      if: hashFiles('backend/OrderProductApi/OrderProductApi.csproj') != ''
       working-directory: ./backend/OrderProductApi
       run: dotnet build --configuration Release
 
@@ -35,6 +36,7 @@ jobs:
         node-version: '20'
 
     - name: Build Frontend
+      if: hashFiles('frontend/package.json') != ''
       working-directory: ./frontend
       run: |
         npm install
@@ -62,6 +64,7 @@ jobs:
       uses: aws-actions/amazon-ecr-login@v2
 
     - name: Build, tag, and push Backend Image
+      if: hashFiles('backend/OrderProductApi/Dockerfile') != ''
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         IMAGE_TAG: ${{ github.sha }}
@@ -73,6 +76,7 @@ jobs:
         docker push $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:latest
 
     - name: Build, tag, and push Frontend Image
+      if: hashFiles('frontend/Dockerfile') != ''
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         IMAGE_TAG: ${{ github.sha }}
