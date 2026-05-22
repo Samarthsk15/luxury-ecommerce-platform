@@ -48,34 +48,35 @@
         </div>
       </section>
 
-      <!-- Live Auction System -->
-      <section class="glass-card module-section">
+      <!-- Live Auction System Summary -->
+      <section class="glass-card module-section bidding-summary-section">
         <div class="module-header">
           <span class="icon">⚖️</span>
-          <h2>Advertisement Auction System</h2>
+          <h2>Real-Time Ad Placements</h2>
         </div>
         <p class="ad-disclaimer" style="margin-top:0; margin-bottom:1.5rem; border-color:var(--warning);">
-          <em>Dynamic advertisement marketplace. Sellers bid for priority visibility on the homepage.</em>
+          <em>Manage premium brand ad placements, homepage real estate, and sponsored search auction systems.</em>
         </p>
 
-        <div class="auction-board">
-          <div class="auction-row header-row">
-            <span>Rank</span>
-            <span>Product</span>
-            <span>Bid Amount</span>
-            <span>Status</span>
+        <div class="premium-link-card">
+          <div class="glow-container">
+            <span class="live-dot-glow"></span>
+            <span class="active-badge-text">LIVE AUCTION SUMMARY</span>
           </div>
-          <div v-for="bid in adStore.auctionBids" :key="bid.id" class="auction-row animate-row">
-            <span :class="['rank', `rank-${bid.rank}`]">#{{ bid.rank }}</span>
-            <span class="product-name">{{ bid.product }}</span>
-            <span class="bid-amt">₹{{ bid.amount.toLocaleString() }}</span>
-            <span :class="['status', bid.status === 'Outbid' ? 'outbid' : 'live']">{{ bid.status }}</span>
+          <div class="quick-stats-row">
+            <div class="quick-stat">
+              <span class="lbl font-body">Top Spot Bid</span>
+              <span class="val font-headline">₹{{ adStore.rank1Product ? adStore.rank1Product.amount.toLocaleString() : '1,500' }}</span>
+            </div>
+            <div class="quick-stat">
+              <span class="lbl font-body">Active Bidders</span>
+              <span class="val font-headline">{{ adStore.auctionBids.length }}</span>
+            </div>
           </div>
-        </div>
-        
-        <div class="ad-controls" style="margin-top:1.5rem;">
-          <button class="btn-luxury" @click="simulateNewBid">Simulate New Bid</button>
-          <button class="btn-luxury">Manage Auction Rules</button>
+          
+          <router-link to="/admin/bidding" class="btn-launch-portal font-headline">
+            Launch Bidding Console ↗
+          </router-link>
         </div>
       </section>
     </div>
@@ -225,53 +226,96 @@ onMounted(async () => {
   line-height: 1.4;
 }
 
-/* Auction Board */
-.auction-board {
+/* Bidding Portal Summary Card */
+.premium-link-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  background: rgba(0,0,0,0.3);
-  border-radius: var(--radius-md);
-  padding: 0.5rem;
-  border: 1px solid rgba(255,255,255,0.05);
+  gap: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s;
 }
 
-.auction-row {
-  display: grid;
-  grid-template-columns: 0.5fr 2fr 1fr 1fr;
-  padding: 0.8rem 1rem;
-  border-radius: var(--radius-sm);
-  background: rgba(255,255,255,0.03);
-  font-size: 0.85rem;
+.premium-link-card:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(212, 175, 55, 0.3);
+  box-shadow: 0 15px 40px rgba(212, 175, 55, 0.08);
+}
+
+.glow-container {
+  display: flex;
   align-items: center;
+  gap: 0.5rem;
 }
 
-.header-row {
-  background: transparent;
-  color: var(--text-muted);
-  font-weight: 600;
-  text-transform: uppercase;
+.live-dot-glow {
+  width: 8px;
+  height: 8px;
+  background: #facc15;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #facc15;
+  animation: dot-pulse 1.8s infinite;
+}
+
+.active-badge-text {
   font-size: 0.7rem;
+  font-weight: 700;
+  color: #facc15;
+  letter-spacing: 0.1em;
+}
+
+.quick-stats-row {
+  display: flex;
+  gap: 2rem;
+}
+
+.quick-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.quick-stat .lbl {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
-.rank { font-weight: 800; color: var(--text-muted); }
-.rank-1 { color: #facc15; font-size: 1rem; text-shadow: 0 0 10px rgba(250, 204, 21, 0.5); }
-.rank-2 { color: #94a3b8; }
-.rank-3 { color: #b45309; }
-
-.product-name { font-weight: 500; color: #fff; }
-.bid-amt { font-family: var(--font-headline); font-weight: 700; color: #10b981; }
-
-.status {
-  padding: 0.2rem 0.5rem;
-  border-radius: var(--radius-full);
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-align: center;
+.quick-stat .val {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--success);
 }
-.status.live { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
-.status.outbid { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+.btn-launch-portal {
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: 0.8rem;
+  background: linear-gradient(135deg, #ffffff, #d4af37);
+  color: #000;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.15);
+  transition: all 0.3s;
+}
+
+.btn-launch-portal:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(212, 175, 55, 0.3);
+}
+
+@keyframes dot-pulse {
+  0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.7); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(250, 204, 21, 0); }
+  100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(250, 204, 21, 0); }
+}
 
 .fade-in {
   animation: fadeIn 0.8s ease-out forwards;

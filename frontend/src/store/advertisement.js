@@ -45,10 +45,42 @@ export const useAdvertisementStore = defineStore('advertisement', () => {
       else bid.status = 'Outbid';
     });
     
-    if (auctionBids.value.length > 5) {
-       auctionBids.value = auctionBids.value.slice(0, 5);
+    if (auctionBids.value.length > 6) {
+       auctionBids.value = auctionBids.value.slice(0, 6);
     }
   };
 
-  return { auctionBids, rank1Product, rank2Product, rank3Product, simulateNewBid };
+  const placeBid = (productName, amount) => {
+    const existingIndex = auctionBids.value.findIndex(b => b.product.toLowerCase() === productName.toLowerCase());
+    
+    if (existingIndex !== -1) {
+      auctionBids.value[existingIndex].amount = amount;
+    } else {
+      auctionBids.value.push({
+        id: Date.now(),
+        product: productName,
+        amount: amount,
+        rank: 0,
+        status: '',
+        imageUrl: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&q=80',
+        description: 'Premium custom bid product.'
+      });
+    }
+
+    auctionBids.value.sort((a, b) => b.amount - a.amount);
+    
+    auctionBids.value.forEach((bid, index) => {
+      bid.rank = index + 1;
+      if (bid.rank === 1) bid.status = 'Live (Homepage)';
+      else if (bid.rank === 2) bid.status = 'Live (Search)';
+      else if (bid.rank === 3) bid.status = 'Banner Only';
+      else bid.status = 'Outbid';
+    });
+    
+    if (auctionBids.value.length > 6) {
+       auctionBids.value = auctionBids.value.slice(0, 6);
+    }
+  };
+
+  return { auctionBids, rank1Product, rank2Product, rank3Product, simulateNewBid, placeBid };
 });

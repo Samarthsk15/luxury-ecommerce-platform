@@ -1,8 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using OrderProductApi.Data;
 using OrderProductApi.Models;
+using OrderProductApi.Services;
 
 namespace OrderProductApi.Controllers;
 
@@ -10,93 +9,93 @@ namespace OrderProductApi.Controllers;
 [ApiController]
 public class ProductsController : ControllerBase
 {
-    private readonly ShopContext _context;
+    private readonly IProductService _productService;
 
-    public ProductsController(ShopContext context)
+    public ProductsController(IProductService productService)
     {
-        _context = context;
+        _productService = productService;
     }
 
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int limit = 20, [FromQuery] string? category = null)
     {
-        var query = _context.Products.AsQueryable();
-
-        if (!string.IsNullOrWhiteSpace(category) && category.ToLower() != "all")
+        try
         {
-            query = query.Where(p => p.Category.ToLower() == category.ToLower());
+            var (products, total) = await _productService.GetAllProductsAsync(page, limit, category);
+            return Ok(new
+            {
+                total,
+                page,
+                limit,
+                totalPages = (int)Math.Ceiling(total / (double)limit),
+                products
+            });
         }
-
-        var total = await query.CountAsync();
-        
-        var products = await query
-            .OrderBy(p => p.Id)
-            .Skip((page - 1) * limit)
-            .Take(limit)
-            .ToListAsync();
-
-        return Ok(new
+        catch (Exception ex)
         {
-            total,
-            page,
-            limit,
-            totalPages = (int)Math.Ceiling(total / (double)limit),
-            products
-        });
+            return StatusCode(500, new { message = "An error occurred while retrieving products.", details = ex.Message });
+        }
     }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> Get(int id)
     {
-        var product = await _context.Products.FindAsync(id);
-        if (product == null) return NotFound();
-        return Ok(product);
+        try
+        {
+            var product = await _productService.GetProductByIdAsync(id);
+            if (product == null) return NotFound();
+            return Ok(product);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while retrieving the product.", details = ex.Message });
+        }
     }
 
     [HttpPost]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create(Product payload)
     {
-        var product = new Product
+        try
         {
-            Name = payload.Name,
-            Description = payload.Description,
-            Price = payload.Price,
-            InventoryCount = payload.InventoryCount,
-            ImageUrl = payload.ImageUrl
-        };
-
-        _context.Products.Add(product);
-        await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(Get), new { id = product.Id }, product);
+            var product = await _productService.CreateProductAsync(payload);
+            return CreatedAtAction(nameof(Get), new { id = product.Id }, product);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while creating the product.", details = ex.Message });
+        }
     }
 
     [HttpPut("{id}")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Update(int id, Product payload)
     {
-        var product = await _context.Products.FindAsync(id);
-        if (product == null) return NotFound();
-
-        product.Name = payload.Name;
-        product.Description = payload.Description;
-        product.Price = payload.Price;
-        product.InventoryCount = payload.InventoryCount;
-        product.ImageUrl = payload.ImageUrl;
-
-        await _context.SaveChangesAsync();
-        return Ok(product);
+        try
+        {
+            var product = await _productService.UpdateProductAsync(id, payload);
+            if (product == null) return NotFound();
+            return Ok(product);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while updating the product.", details = ex.Message });
+        }
     }
 
     [HttpDelete("{id}")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(int id)
     {
-        var product = await _context.Products.FindAsync(id);
-        if (product == null) return NotFound();
-
-        _context.Products.Remove(product);
-        await _context.SaveChangesAsync();
-        return NoContent();
+        try
+        {
+            var success = await _productService.DeleteProductAsync(id);
+            if (!success) return NotFound();
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while deleting the product.", details = ex.Message });
+        }
     }
 }

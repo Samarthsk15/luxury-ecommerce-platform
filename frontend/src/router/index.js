@@ -16,6 +16,7 @@ const routes = [
   { path: '/deals', name: 'Deals', component: OffersPage, meta: { requiresAuth: true } },
   { path: '/products', name: 'Products', component: ProductsPage, meta: { requiresAuth: true } },
   { path: '/admin', name: 'Admin', component: () => import('../pages/AdminDashboard.vue'), meta: { requiresAuth: true, requiresAdmin: true } },
+  { path: '/admin/bidding', name: 'AdminBidding', component: () => import('../pages/BiddingPortal.vue'), meta: { requiresAuth: true, requiresAdmin: true } },
 ];
 
 const router = createRouter({
@@ -28,6 +29,12 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
+  const isPortAdmin = typeof window !== 'undefined' && window.location.port === '5174';
+
+  if (isPortAdmin && to.path === '/') {
+    next('/admin');
+    return;
+  }
 
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next('/login');

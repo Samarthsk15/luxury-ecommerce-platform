@@ -2,21 +2,34 @@
   <header class="luxe-header">
     <div class="header-inner">
       <!-- Logo -->
-      <router-link to="/" class="logo">
-        <span class="logo-text">LUXE</span>
+      <router-link :to="isAdminPort ? '/admin' : '/'" class="logo">
+        <span class="logo-text">{{ isAdminPort ? 'LUXE ADMIN' : 'LUXE' }}</span>
         <span class="logo-dot"></span>
       </router-link>
 
       <!-- Nav Links -->
       <nav class="nav-links">
-        <router-link to="/" class="nav-item" active-class="active">Shop</router-link>
-        <router-link to="/deals" class="nav-item" active-class="active">Deals</router-link>
-        <router-link to="/products" class="nav-item" active-class="active">Discover</router-link>
-        <router-link to="/cart" class="nav-item" active-class="active">Cart</router-link>
-        <router-link v-if="authStore.isAdmin" to="/admin" class="nav-item" active-class="active">Admin</router-link>
+        <template v-if="isAdminPort">
+          <router-link to="/admin" class="nav-item" active-class="active">Dashboard</router-link>
+          <router-link to="/admin/bidding" class="nav-item" active-class="active">Bidding Portal</router-link>
+          <a href="http://localhost:5173" class="nav-item storefront-link">Storefront ↗</a>
+        </template>
+        <template v-else>
+          <router-link to="/" class="nav-item" active-class="active">Shop</router-link>
+          <router-link to="/deals" class="nav-item" active-class="active">Deals</router-link>
+          <router-link to="/products" class="nav-item" active-class="active">Discover</router-link>
+          <router-link to="/cart" class="nav-item" active-class="active">Cart</router-link>
+          <a v-if="authStore.isAdmin" href="http://localhost:5174/admin" class="nav-item admin-link">Admin Portal ↗</a>
+        </template>
       </nav>
 
-      <!-- Theme Selector -->
+      <!-- Theme Toggle Mode (Light / Dark) next to search bar -->
+      <button @click="toggleLightDark" class="mode-toggle-btn" :title="themeStore.currentMood === 'minimal' ? 'Switch to Dark Mode' : 'Switch to Light Mode'">
+        <span v-if="themeStore.currentMood === 'minimal'">🌙</span>
+        <span v-else>☀️</span>
+      </button>
+
+      <!-- Theme Selector Dropdown -->
       <div class="theme-selector">
         <select :value="themeStore.currentMood" @change="changeMood" class="mood-select">
           <option value="luxury">Luxury Mood</option>
@@ -35,7 +48,7 @@
 
       <!-- Right Actions -->
       <div class="header-actions">
-        <router-link to="/cart" class="cart-btn">
+        <router-link v-if="!isAdminPort" to="/cart" class="cart-btn">
           <span class="cart-icon">🛒</span>
           <span v-if="cartCount > 0" class="cart-badge">{{ cartCount }}</span>
         </router-link>
@@ -63,11 +76,21 @@ const themeStore = useThemeStore();
 const router = useRouter();
 const query = ref('');
 
+const isAdminPort = computed(() => typeof window !== 'undefined' && window.location.port === '5174');
+
 const cartCount = computed(() => cartStore.itemCount);
 const userInitial = computed(() => {
   const name = authStore.user?.name || 'U';
   return name.charAt(0).toUpperCase();
 });
+
+const toggleLightDark = () => {
+  if (themeStore.currentMood === 'minimal') {
+    themeStore.setMood('luxury');
+  } else {
+    themeStore.setMood('minimal');
+  }
+};
 
 const doSearch = () => {
   if (query.value.trim()) {
@@ -373,5 +396,38 @@ const logout = () => {
 .logout-btn:hover {
   color: var(--error);
   background: rgba(239, 68, 68, 0.1);
+}
+
+.mode-toggle-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-glass);
+  color: var(--text-primary);
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.mode-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--border-glass-hover);
+  transform: scale(1.05);
+  box-shadow: 0 0 15px var(--accent-glow);
+}
+
+.storefront-link {
+  color: #00f2ff !important;
+  font-weight: 600;
+}
+
+.admin-link {
+  color: #d4af37 !important;
+  font-weight: 600;
 }
 </style>

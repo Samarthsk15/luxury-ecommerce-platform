@@ -49,20 +49,18 @@
             <span class="input-icon-right">🔵</span>
           </div>
 
-          <button type="submit" class="submit-btn" :disabled="submitting" :style="isAdminLogin ? 'background: rgba(212, 175, 55, 0.2); border-color: rgba(212, 175, 55, 0.5); color: #d4af37;' : ''">
+          <button type="submit" class="submit-btn" :disabled="submitting" :style="isAdminLogin ? 'background: rgba(212, 175, 55, 0.15); border: 1px solid rgba(212, 175, 55, 0.5); color: #d4af37;' : ''">
             <span v-if="submitting" class="spinner"></span>
             <span v-else>{{ isAdminLogin ? 'Secure Admin Login' : (isRegister ? 'Sign up' : 'Log in') }}</span>
           </button>
 
+          <!-- Standard Social Login (Quick Admin switch button completely removed!) -->
           <div v-if="!isAdminLogin" class="social-login">
             <button type="button" class="social-btn">
               <span class="s-icon">f</span> Facebook
             </button>
             <button type="button" class="social-btn" @click="handleGoogleOAuth">
               <span class="s-icon">G</span> Google
-            </button>
-            <button type="button" class="social-btn" @click="toggleAdminMode">
-              <span class="s-icon">👑</span> Admin
             </button>
           </div>
         </form>
@@ -71,11 +69,11 @@
           <template v-if="isVerification">
             Didn't receive the email? <a href="#" @click.prevent="resendCode">Click to resend</a>
           </template>
-          <template v-else-if="isAdminLogin">
+          <template v-else-if="isAdminLogin && !isAdminPort">
             Not an administrator?
             <a href="#" @click.prevent="toggleAdminMode">Return to user login</a>
           </template>
-          <template v-else>
+          <template v-else-if="!isAdminPort">
             {{ isRegister ? 'Already have an account?' : "Didn't have an account?" }}
             <a href="#" @click.prevent="toggleMode">{{ isRegister ? 'Log in' : 'Sign up' }}</a>
           </template>
@@ -95,7 +93,10 @@ const router = useRouter();
 
 const isRegister = ref(false);
 const isVerification = ref(false);
-const isAdminLogin = ref(false);
+
+const isAdminPort = computed(() => typeof window !== 'undefined' && window.location.port === '5174');
+// Automatically set to admin login if running on port 5174
+const isAdminLogin = ref(typeof window !== 'undefined' && window.location.port === '5174');
 
 const name = ref('');
 const email = ref('');
@@ -257,30 +258,31 @@ const resendCode = () => {
   justify-content: center;
   background: var(--bg-void);
   padding: 1rem;
+  transition: background 0.3s ease;
 }
 
 .login-card {
   position: relative;
   width: 100%;
   max-width: 500px;
-  background: rgba(20, 20, 25, 0.8);
+  background: var(--bg-surface);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border-radius: 24px;
   overflow: hidden;
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--border-glass);
+  transition: all 0.3s ease;
 }
 
-/* Recreating the blue edge glow from the reference image */
 .glow-edge {
   position: absolute;
   top: 0;
   left: 0;
   bottom: 0;
   width: 1px;
-  background: linear-gradient(to bottom, transparent, rgba(46, 91, 255, 0.8), transparent);
-  box-shadow: 0 0 20px 2px rgba(46, 91, 255, 0.5);
+  background: linear-gradient(to bottom, transparent, var(--text-accent), transparent);
+  box-shadow: 0 0 20px 2px var(--accent-glow);
 }
 
 .card-content {
@@ -294,14 +296,14 @@ const resendCode = () => {
 .title {
   font-size: 2.2rem;
   font-weight: 600;
-  color: white;
+  color: var(--text-primary);
   margin-bottom: 1rem;
   font-family: var(--font-headline);
 }
 
 .subtitle {
   font-size: 0.9rem;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   line-height: 1.6;
   margin-bottom: 2.5rem;
   max-width: 90%;
@@ -337,6 +339,7 @@ const resendCode = () => {
   font-size: 1.1rem;
   opacity: 0.5;
   pointer-events: none;
+  color: var(--text-primary);
 }
 
 .input-icon-right {
@@ -344,47 +347,51 @@ const resendCode = () => {
   right: 1.2rem;
   font-size: 0.8rem;
   pointer-events: none;
+  color: var(--text-muted);
 }
 
 .input-group input {
   width: 100%;
   padding: 1.1rem 1.2rem 1.1rem 3rem;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-glass);
   border-radius: 16px;
-  color: white;
+  color: var(--text-primary);
   font-size: 0.95rem;
   transition: all 0.3s ease;
+  outline: none;
 }
 
 .input-group input::placeholder {
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--text-muted);
 }
 
 .input-group input:focus {
-  border-color: rgba(46, 91, 255, 0.5);
-  background: rgba(255, 255, 255, 0.02);
-  box-shadow: inset 0 0 0 1px rgba(46, 91, 255, 0.5);
+  border-color: var(--text-accent);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 0 0 1px var(--border-glass-hover);
 }
 
 .submit-btn {
   width: 100%;
   padding: 1.1rem;
   margin-top: 0.5rem;
-  background: rgba(255, 255, 255, 0.08);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--text-primary);
+  color: var(--bg-void);
+  border: 1px solid var(--border-glass);
   border-radius: 16px;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 1rem;
   transition: all 0.3s ease;
   display: flex;
   justify-content: center;
   align-items: center;
+  cursor: pointer;
 }
 
 .submit-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--text-secondary);
+  color: var(--bg-void);
   transform: translateY(-1px);
 }
 
@@ -397,6 +404,7 @@ const resendCode = () => {
   display: flex;
   gap: 0.8rem;
   margin-top: 1rem;
+  width: 100%;
 }
 
 .social-btn {
@@ -407,18 +415,19 @@ const resendCode = () => {
   gap: 0.5rem;
   padding: 0.9rem;
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-glass);
   border-radius: 16px;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary);
   font-size: 0.85rem;
   font-weight: 500;
   transition: all 0.2s ease;
+  cursor: pointer;
 }
 
 .social-btn:hover {
   background: rgba(255, 255, 255, 0.05);
-  color: white;
-  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--text-primary);
+  border-color: var(--border-glass-hover);
 }
 
 .s-icon {
@@ -429,18 +438,18 @@ const resendCode = () => {
 .footer-toggle {
   margin-top: 2.5rem;
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--text-muted);
 }
 
 .footer-toggle a {
-  color: var(--accent-blue);
+  color: var(--text-accent);
   margin-left: 0.3rem;
   font-weight: 500;
   transition: color 0.2s;
 }
 
 .footer-toggle a:hover {
-  color: white;
+  color: var(--text-primary);
   text-decoration: underline;
 }
 
@@ -448,7 +457,7 @@ const resendCode = () => {
   width: 20px;
   height: 20px;
   border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
+  border-top-color: var(--text-primary);
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
 }
@@ -460,6 +469,11 @@ const resendCode = () => {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 @media (max-width: 480px) {
