@@ -123,6 +123,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
 
 const tableProducts = ref([]);
 const featuredProduct = ref(null);
@@ -145,7 +146,7 @@ const getCategoryIcon = (category) => {
 
 const fetchLiveData = async () => {
   try {
-    const res = await fetch('http://localhost:5000/api/products?limit=5');
+    const res = await fetch(`${API_BASE}/api/products?limit=5`);
     if (!res.ok) throw new Error('Failed to fetch');
     const data = await res.json();
     

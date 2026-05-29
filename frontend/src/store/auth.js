@@ -1,5 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
+import { useCartStore } from './cart';
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null);
@@ -10,7 +12,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const login = async (email, password) => {
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch(`${API_BASE}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -32,6 +34,13 @@ export const useAuthStore = defineStore('auth', () => {
       };
       token.value = data.token;
       localStorage.setItem('token', data.token);
+      // Merge any local cart items into the user's server-side cart
+      try {
+        const cartStore = useCartStore();
+        await cartStore.mergeAfterLogin(data.token);
+      } catch (e) {
+        console.warn('Cart merge attempt failed after login', e);
+      }
       return { success: true };
     } catch (error) {
       console.error('Login error:', error);
@@ -41,7 +50,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const register = async (name, email, password, phone, address) => {
     try {
-      const response = await fetch('http://localhost:5000/api/auth/register', {
+      const response = await fetch(`${API_BASE}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -91,6 +91,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
 import { useRoute, useRouter } from 'vue-router';
 import { useCartStore } from '../store/cart';
 import { useAdvertisementStore } from '../store/advertisement';
@@ -148,7 +149,7 @@ const fetchProducts = async (reset = false) => {
   loading.value = true;
   try {
     const catQuery = activeCategory.value === 'All' ? '' : `&category=${activeCategory.value}`;
-    const res = await fetch(`http://localhost:5000/api/products?page=${page.value}&limit=${pageSize}${catQuery}`);
+    const res = await fetch(`${API_BASE}/api/products?page=${page.value}&limit=${pageSize}${catQuery}`);
     if (!res.ok) throw new Error('API error');
     const data = await res.json();
     

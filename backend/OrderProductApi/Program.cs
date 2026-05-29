@@ -26,6 +26,14 @@ builder.Services.AddDbContext<ShopContext>(options =>
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<JwtTokenService>();
 
+// Register Repositories
+builder.Services.AddScoped<OrderProductApi.Repositories.IProductRepository, OrderProductApi.Repositories.ProductRepository>();
+builder.Services.AddScoped<OrderProductApi.Repositories.IOrderRepository, OrderProductApi.Repositories.OrderRepository>();
+
+// Register Services
+builder.Services.AddScoped<IProductService, OrderProductApi.Services.ProductService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "SuperSecretKeyForJWTTokenGeneration256BitsLongEnoughForHS256Algorithm";
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "OrderProductApi";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "OrderProductApiClient";

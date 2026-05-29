@@ -1,5 +1,15 @@
 <template>
   <div class="success-page">
+    <transition name="toast-slide">
+      <div v-if="toastVisible" class="toast-notification success">
+        <div class="toast-icon">🎉</div>
+        <div class="toast-text">
+          <strong>{{ toastTitle }}</strong>
+          <p>{{ toastMessage }}</p>
+        </div>
+      </div>
+    </transition>
+
     <div class="glass-card success-card">
       <div class="icon-container">
         <span class="icon">✅</span>
@@ -12,13 +22,28 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useCartStore } from '../store/cart';
 
 const cart = useCartStore();
+const toastVisible = ref(false);
+const toastTitle = ref('Order Confirmed');
+const toastMessage = ref('Your luxury order has been processed successfully. Sit back and relax while we prepare it for shipping.');
+let toastTimeout = null;
+
+const showToast = () => {
+  toastVisible.value = true;
+  if (toastTimeout) {
+    clearTimeout(toastTimeout);
+  }
+  toastTimeout = setTimeout(() => {
+    toastVisible.value = false;
+  }, 4500);
+};
 
 onMounted(() => {
   cart.clearCart();
+  showToast();
 });
 </script>
 
@@ -100,5 +125,61 @@ onMounted(() => {
     opacity: 1;
     transform: scale(1);
   }
+}
+
+.toast-notification {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.4rem;
+  border-radius: 1.25rem;
+  min-width: 320px;
+  background: rgba(15, 23, 42, 0.98);
+  color: #ffffff;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(18px);
+}
+
+.toast-icon {
+  font-size: 1.6rem;
+  width: 2.2rem;
+  height: 2.2rem;
+  display: grid;
+  place-items: center;
+}
+
+.toast-text strong {
+  display: block;
+  font-size: 1rem;
+  margin-bottom: 0.2rem;
+}
+
+.toast-text p {
+  margin: 0;
+  line-height: 1.4;
+  font-size: 0.95rem;
+  opacity: 0.9;
+}
+
+.toast-slide-enter-active,
+.toast-slide-leave-active {
+  transition: all 0.25s ease;
+}
+
+.toast-slide-enter-from,
+.toast-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-1rem) scale(0.96);
+}
+
+.toast-slide-enter-to,
+.toast-slide-leave-from {
+  opacity: 1;
+  transform: translateY(0);
 }
 </style>
