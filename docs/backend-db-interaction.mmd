@@ -1,0 +1,18 @@
+sequenceDiagram
+    participant Client
+    participant API as Backend API (Controllers)
+    participant Svc as Services
+    participant Repo as Repositories
+    participant ORM as DbContext / ORM
+    participant DB as Database
+
+    Client->>API: HTTP request (REST/GraphQL)
+    API->>Svc: validate + auth
+    Svc->>Repo: business logic -> data request
+    Repo->>ORM: build query / ORM call
+    ORM->>DB: SQL executed
+    DB-->>ORM: rows / result
+    ORM-->>Repo: mapped entities
+    Repo-->>Svc: domain objects
+    Svc-->>API: response DTO
+    API-->>Client: HTTP response (JSON)

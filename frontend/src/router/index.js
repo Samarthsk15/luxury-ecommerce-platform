@@ -15,6 +15,7 @@ const routes = [
   { path: '/checkout-success', name: 'CheckoutSuccess', component: SuccessPage, meta: { requiresAuth: true } },
   { path: '/deals', name: 'Deals', component: OffersPage },
   { path: '/products', name: 'Products', component: ProductsPage },
+  { path: '/backend-interaction', name: 'BackendInteraction', component: () => import('../pages/BackendInteraction.vue') },
   { path: '/admin', name: 'Admin', component: () => import('../pages/AdminDashboard.vue'), meta: { requiresAuth: true, requiresAdmin: true } },
   { path: '/admin/orders', name: 'AdminOrders', component: () => import('../pages/AdminOrders.vue'), meta: { requiresAuth: true, requiresAdmin: true } },
   { path: '/admin/bidding', name: 'AdminBidding', component: () => import('../pages/BiddingPortal.vue'), meta: { requiresAuth: true, requiresAdmin: true } },
