@@ -68,4 +68,17 @@ import { useAuthStore } from './store/auth.js';
 const authStore = useAuthStore();
 authStore.checkAuth();
 
+// Clear ephemeral browsing history on full page load/refresh.
+// Note: we intentionally do NOT clear `cart_local` so cart persists across refresh/login.
+window.addEventListener('load', () => {
+  try {
+    localStorage.removeItem('recentlyViewed');
+    localStorage.removeItem('searchHistory');
+    localStorage.removeItem('history');
+    sessionStorage.clear();
+  } catch (e) {
+    console.warn('Failed to clear browsing history keys on load', e);
+  }
+});
+
 app.mount('#app');

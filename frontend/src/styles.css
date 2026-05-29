@@ -10,6 +10,12 @@
   --bg-card-hover: rgba(255, 255, 255, 0.05);
   --bg-glass: rgba(255, 255, 255, 0.03);
 
+  --color-card: var(--bg-card);
+  --color-border: var(--border-glass);
+  --color-text: var(--text-primary);
+  --color-text-muted: var(--text-muted);
+  --color-accent: var(--accent-violet);
+
   /* Accent Colors - Platinum / Gold feel */
   --accent-blue: #ffffff;
   --accent-violet: #d4af37;
@@ -82,23 +88,27 @@
 }
 
 [data-theme="minimal"] {
-  --bg-void: #ffffff;
-  --bg-surface: #f9f9f9;
+  --bg-void: #f8fafc;
+  --bg-surface: #ffffff;
   --bg-elevated: #ffffff;
-  --bg-card: rgba(0, 0, 0, 0.02);
-  --bg-card-hover: rgba(0, 0, 0, 0.05);
-  --accent-blue: #000000;
-  --accent-violet: #333333;
-  --accent-gradient: linear-gradient(135deg, #000000, #333333);
-  --accent-glow: rgba(0, 0, 0, 0.05);
-  --accent-glow-violet: rgba(0, 0, 0, 0.05);
-  --text-primary: #000000;
-  --text-secondary: rgba(0, 0, 0, 0.6);
-  --text-muted: rgba(0, 0, 0, 0.4);
-  --text-accent: #000000;
-  --border-glass: rgba(0, 0, 0, 0.08);
-  --border-glass-hover: rgba(0, 0, 0, 0.15);
-  --border-accent: rgba(0, 0, 0, 0.2);
+  --bg-card: rgba(255, 255, 255, 0.92);
+  --bg-glass: rgba(255, 255, 255, 0.72);
+  --bg-card-hover: rgba(15, 23, 42, 0.04);
+  --accent-blue: #111827;
+  --accent-violet: #7c3aed;
+  --accent-gradient: linear-gradient(135deg, #111827, #d4af37);
+  --accent-glow: rgba(17, 24, 39, 0.08);
+  --accent-glow-violet: rgba(212, 175, 55, 0.12);
+  --text-primary: #111827;
+  --text-secondary: rgba(17, 24, 39, 0.7);
+  --text-muted: rgba(55, 65, 81, 0.7);
+  --text-accent: #111827;
+  --border-glass: rgba(15, 23, 42, 0.08);
+  --border-glass-hover: rgba(15, 23, 42, 0.16);
+  --border-accent: rgba(15, 23, 42, 0.12);
+  --surface-container: #f3f4f6;
+  --surface-high: #e5e7eb;
+  --surface-highest: #d1d5db;
   --font-headline: 'Montserrat', system-ui, sans-serif;
 }
 

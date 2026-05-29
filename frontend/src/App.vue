@@ -1,6 +1,6 @@
 <template>
   <div id="app-root">
-    <HeaderComponent v-if="authStore.isAuthenticated && route?.name !== 'Login'" />
+    <HeaderComponent v-if="route?.name !== 'Login'" />
     <main :class="['page-view', { 'full-bleed': route?.name === 'Login' || route?.name === 'Home' }]">
       <router-view v-slot="{ Component }">
         <transition name="page" mode="out-in">
@@ -8,7 +8,7 @@
         </transition>
       </router-view>
     </main>
-    <FooterComponent v-if="authStore.isAuthenticated && route?.name !== 'Login'" />
+    <FooterComponent v-if="route?.name !== 'Login'" />
   </div>
 </template>
 
@@ -16,9 +16,7 @@
 import { useRoute } from 'vue-router';
 import HeaderComponent from './components/HeaderComponent.vue';
 import FooterComponent from './components/FooterComponent.vue';
-import { useAuthStore } from './store/auth.js';
 
-const authStore = useAuthStore();
 const route = useRoute();
 </script>
 

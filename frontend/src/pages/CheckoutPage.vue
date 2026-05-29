@@ -1,5 +1,15 @@
 <template>
   <div class="checkout-page">
+    <transition name="toast-slide">
+      <div v-if="toastVisible" class="toast-notification" :class="toastType">
+        <div class="toast-icon">{{ toastType === 'success' ? '🎉' : '⚠️' }}</div>
+        <div class="toast-text">
+          <strong>{{ toastTitle }}</strong>
+          <p>{{ toastMessage }}</p>
+        </div>
+      </div>
+    </transition>
+
     <div class="checkout-container">
       
       <!-- Left Column: Checkout Steps -->
@@ -171,6 +181,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
 import { useCartStore } from '../store/cart';
 import { useAuthStore } from '../store/auth';
 
@@ -181,6 +192,11 @@ const auth = useAuthStore();
 const currentStep = ref(1);
 const placingOrder = ref(false);
 const selectedPayment = ref('upi'); // Default selection
+const toastVisible = ref(false);
+const toastMessage = ref('');
+const toastTitle = ref('');
+const toastType = ref('success');
+let toastTimeout = null;
 
 const address = ref({
   fullName: '',
@@ -191,50 +207,60 @@ const address = ref({
 });
 const addressError = ref('');
 
+const decodeEmailName = (email) => {
+  if (!email || !email.includes('@')) return '';
+  const localPart = email.split('@')[0].split('+')[0];
+  const normalized = localPart
+    .replace(/[_.-]+/g, ' ')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/[0-9]+/g, ' ')
+    .trim();
+  const words = normalized
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
+  return words.join(' ');
+};
+
 const smartAutoFill = () => {
-  const userName = auth.user?.username || auth.user?.name || 'Darshan (Predicted)';
+  const emailName = auth.user?.email ? decodeEmailName(auth.user.email) : '';
+  const userName = auth.user?.name || auth.user?.username || emailName || 'Valued Customer';
   address.value.fullName = userName;
-  address.value.phone = '9876543210';
-  
+  address.value.phone = auth.user?.phone || '9876543210';
+  addressError.value = '';
+
   if (!navigator.geolocation) {
     address.value.street = '123 Smart Ave, Tech Park';
     address.value.city = 'Bengaluru';
     address.value.pincode = '560001';
-    addressError.value = '';
     return;
   }
 
-  // Request live location
   navigator.geolocation.getCurrentPosition(async (position) => {
     try {
       const { latitude, longitude } = position.coords;
-      // Free Reverse Geocoding via OpenStreetMap (No API key needed)
       const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
       const data = await res.json();
-      
+
       if (data && data.address) {
-        address.value.city = data.address.city || data.address.state_district || data.address.town || 'Bengaluru';
-        address.value.street = data.address.road || data.address.suburb || 'AI Predicted Area';
-        address.value.pincode = (data.address.postcode || '560001').substring(0, 6);
-        
-        // Force Indian context if outside India
-        if (data.address.country_code !== 'in') {
-          address.value.city = 'Bengaluru (Mapped)';
+        address.value.street = data.address.road || data.address.neighbourhood || data.address.suburb || 'Live Location Lane';
+        address.value.city = data.address.city || data.address.state_district || data.address.town || data.address.state || 'Unknown City';
+        address.value.pincode = (data.address.postcode || '000000').substring(0, 6);
+
+        if (data.address.country_code && data.address.country_code.toLowerCase() !== 'in') {
+          address.value.city = `${address.value.city} (Detected)`;
         }
       }
     } catch (e) {
       address.value.city = 'Mumbai';
-      address.value.street = 'Bandra West (Fallback)';
+      address.value.street = 'Bandra West (Live Fallback)';
       address.value.pincode = '400050';
     }
   }, () => {
-    // Permission denied fallback
     address.value.city = 'New Delhi';
     address.value.street = 'Connaught Place (Predicted)';
     address.value.pincode = '110001';
-  });
-
-  addressError.value = '';
+  }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
 };
 
 const validateAddress = () => {
@@ -264,6 +290,20 @@ const subtotal = computed(() => cart.totalAmount);
 const tax = computed(() => Math.round(cart.totalAmount * 0.18));
 const finalTotal = computed(() => subtotal.value + tax.value);
 
+const showToast = (message, type = 'success', title = 'Success') => {
+  toastTitle.value = title;
+  toastMessage.value = message;
+  toastType.value = type;
+  toastVisible.value = true;
+
+  if (toastTimeout) {
+    clearTimeout(toastTimeout);
+  }
+  toastTimeout = setTimeout(() => {
+    toastVisible.value = false;
+  }, 4200);
+};
+
 const handleRightButtonClick = () => {
   if (currentStep.value === 1) {
     handleAddressSubmit();
@@ -274,38 +314,71 @@ const handleRightButtonClick = () => {
 
 const placeOrder = async () => {
   placingOrder.value = true;
-  
-  if (selectedPayment.value === 'cod') {
-    setTimeout(() => {
-      alert(`🎉 Order successfully placed via Cash on Delivery! Redirecting to home...`);
-      cart.clearCart();
-      router.push('/');
-    }, 2000);
+
+  if (!cart.items?.length) {
+    showToast('Your cart is empty. Add at least one item before placing an order.', 'error', 'Cart Empty');
+    placingOrder.value = false;
     return;
   }
 
+  const orderPayload = {
+    items: cart.items.map(item => ({
+      productId: item.product?.id,
+      quantity: item.quantity,
+    }))
+  };
+
   try {
-    const response = await fetch('http://localhost:5000/api/payment/create-checkout-session', {
+    const response = await fetch(`${API_BASE}/api/orders`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
       },
-      body: JSON.stringify({
-        amount: finalTotal.value,
-        returnUrl: window.location.origin + '/checkout-success'
-      })
+      body: JSON.stringify(orderPayload),
     });
-    
-    if (response.ok) {
-      const data = await response.json();
-      window.location.href = data.url;
-    } else {
-      alert('Payment initialization failed. Please try again.');
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      const message = errorData?.message || 'Unable to place order at this time.';
+      showToast(message, 'error', 'Order Failed');
       placingOrder.value = false;
+      return;
+    }
+
+    const createdOrder = await response.json();
+
+    if (selectedPayment.value === 'cod') {
+      showToast('Your order has been placed successfully. Delivery partner will reach out soon.', 'success', 'Order Confirmed');
+      cart.clearLocal();
+      setTimeout(() => {
+        router.push('/');
+      }, 1600);
+    } else {
+      // For payment methods other than COD, continue with checkout flow.
+      const paymentResponse = await fetch(`${API_BASE}/api/payment/create-checkout-session`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: finalTotal.value,
+          returnUrl: window.location.origin + '/checkout-success',
+          orderId: createdOrder.id,
+        })
+      });
+
+      if (paymentResponse.ok) {
+        const data = await paymentResponse.json();
+        window.location.href = data.url;
+      } else {
+        showToast('Payment initialization failed. Please try again.', 'error', 'Payment Error');
+        placingOrder.value = false;
+      }
     }
   } catch (error) {
-    console.error('Stripe checkout error:', error);
-    alert('An error occurred while connecting to the payment gateway.');
+    console.error('Checkout order error:', error);
+    showToast('An error occurred while placing your order.', 'error', 'Order Error');
     placingOrder.value = false;
   }
 };
@@ -332,11 +405,70 @@ const placeOrder = async () => {
   letter-spacing: -0.03em;
 }
 
-/* Steps Styling */
-.checkout-steps {
+.toast-notification {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 9999;
   display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.4rem;
+  border-radius: 1.25rem;
+  min-width: 320px;
+  background: rgba(15, 23, 42, 0.98);
+  color: #ffffff;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(18px);
+}
+
+.toast-notification.success {
+  border-color: rgba(16, 185, 129, 0.7);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.18), rgba(15, 23, 42, 0.95));
+}
+
+.toast-notification.error {
+  border-color: rgba(248, 113, 113, 0.7);
+  background: linear-gradient(135deg, rgba(248, 113, 113, 0.18), rgba(15, 23, 42, 0.95));
+}
+
+.toast-icon {
+  font-size: 1.6rem;
+  width: 2.2rem;
+  height: 2.2rem;
+  display: grid;
+  place-items: center;
+}
+
+.toast-text strong {
+  display: block;
+  font-size: 1rem;
+  margin-bottom: 0.2rem;
+}
+
+.toast-text p {
+  margin: 0;
+  line-height: 1.4;
+  font-size: 0.95rem;
+  opacity: 0.92;
+}
+
+.toast-slide-enter-active,
+.toast-slide-leave-active {
+  transition: all 0.25s ease;
+}
+
+.toast-slide-enter-from,
+.toast-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-1rem) scale(0.96);
+}
+
+.toast-slide-enter-to,
+.toast-slide-leave-from {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .step-card {

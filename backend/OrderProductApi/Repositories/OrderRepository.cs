@@ -15,6 +15,7 @@ public class OrderRepository : IOrderRepository
     public async Task<IEnumerable<Order>> GetAllOrdersAsync(int? userId = null)
     {
         var query = _context.Orders
+            .Include(o => o.User)
             .Include(o => o.Items)
             .ThenInclude(i => i.Product)
             .AsQueryable();
@@ -30,6 +31,7 @@ public class OrderRepository : IOrderRepository
     public async Task<Order?> GetOrderByIdAsync(int id)
     {
         return await _context.Orders
+            .Include(o => o.User)
             .Include(o => o.Items)
             .ThenInclude(i => i.Product)
             .FirstOrDefaultAsync(o => o.Id == id);

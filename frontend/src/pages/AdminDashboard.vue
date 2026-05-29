@@ -6,6 +6,18 @@
     </div>
 
     <div class="dashboard-grid">
+      <!-- Orders & Tracking Module -->
+      <router-link to="/admin/orders" class="glass-card module-section orders-link">
+        <div class="module-header">
+          <span class="icon">📦</span>
+          <h2>Orders & Tracking</h2>
+        </div>
+        <div class="orders-preview">
+          <p class="preview-text">View all customer orders, track shipments, and manage order status</p>
+          <div class="link-arrow">→</div>
+        </div>
+      </router-link>
+
       <!-- Analytics Module -->
       <section class="glass-card module-section">
         <div class="module-header">
@@ -107,7 +119,7 @@ onMounted(async () => {
   padding: 4rem 2rem;
   max-width: 1200px;
   margin: 0 auto;
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .dashboard-header {
@@ -139,8 +151,8 @@ onMounted(async () => {
 .module-section {
   padding: 2rem;
   border-radius: var(--radius-xl);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(20, 20, 20, 0.6);
+  border: 1px solid var(--border-glass);
+  background: var(--bg-card);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
@@ -168,7 +180,7 @@ onMounted(async () => {
 }
 
 .stat-box {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-card);
   padding: 1.5rem;
   border-radius: var(--radius-lg);
   display: flex;
@@ -184,11 +196,11 @@ onMounted(async () => {
 .stat-value {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .trend.positive {
-  color: #10b981;
+  color: var(--success);
   font-size: 0.85rem;
   font-weight: 600;
 }
@@ -202,9 +214,9 @@ onMounted(async () => {
 
 .btn-luxury {
   padding: 0.8rem;
-  background: rgba(168, 85, 247, 0.1);
-  border: 1px solid rgba(168, 85, 247, 0.3);
-  color: white;
+  background: rgba(168, 85, 247, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  color: var(--text-primary);
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: all 0.3s;
@@ -220,7 +232,7 @@ onMounted(async () => {
 .ad-disclaimer {
   font-size: 0.85rem;
   color: var(--text-muted);
-  border-left: 3px solid #3b82f6;
+  border-left: 3px solid var(--accent-violet);
   padding-left: 1rem;
   margin-top: 1.5rem;
   line-height: 1.4;
@@ -228,8 +240,8 @@ onMounted(async () => {
 
 /* Bidding Portal Summary Card */
 .premium-link-card {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
   border-radius: var(--radius-lg);
   padding: 1.5rem;
   display: flex;
@@ -237,12 +249,12 @@ onMounted(async () => {
   gap: 1.5rem;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
   transition: all 0.3s;
 }
 
 .premium-link-card:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--bg-card-hover);
   border-color: rgba(212, 175, 55, 0.3);
   box-shadow: 0 15px 40px rgba(212, 175, 55, 0.08);
 }
@@ -315,6 +327,71 @@ onMounted(async () => {
   0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.7); }
   70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(250, 204, 21, 0); }
   100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(250, 204, 21, 0); }
+}
+
+/* Orders Link Card */
+.orders-link {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  grid-column: span 1;
+}
+
+.orders-link::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(168, 85, 247, 0.2), transparent);
+  transition: left 0.5s ease;
+  z-index: 0;
+}
+
+.orders-link:hover::before {
+  left: 100%;
+}
+
+.orders-link:hover {
+  border-color: rgba(168, 85, 247, 0.5);
+  background: var(--bg-card-hover);
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(168, 85, 247, 0.15);
+}
+
+.orders-link .module-header {
+  position: relative;
+  z-index: 1;
+}
+
+.orders-preview {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+.preview-text {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin: 0;
+  flex: 1;
+}
+
+.link-arrow {
+  font-size: 1.5rem;
+  color: #a855f7;
+  transition: transform 0.3s ease;
+  margin-left: 1rem;
+}
+
+.orders-link:hover .link-arrow {
+  transform: translateX(4px);
 }
 
 .fade-in {

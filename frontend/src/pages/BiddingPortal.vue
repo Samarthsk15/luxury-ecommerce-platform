@@ -387,7 +387,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 1.5rem;
   padding: 1.5rem;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--bg-card);
   backdrop-filter: blur(20px);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-xl);
@@ -407,7 +407,7 @@ onUnmounted(() => {
 }
 
 .bid-card:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--bg-card-hover);
   transform: translateX(8px);
 }
 
@@ -422,7 +422,7 @@ onUnmounted(() => {
 }
 .rank-1 .rank-badge {
   background: #d4af37;
-  color: #000;
+  color: var(--text-primary);
   font-weight: 800;
   box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
 }
@@ -436,7 +436,7 @@ onUnmounted(() => {
 }
 .rank-2 .rank-badge {
   background: #00f2ff;
-  color: #000;
+  color: var(--text-primary);
   font-weight: 800;
 }
 
@@ -622,7 +622,7 @@ onUnmounted(() => {
 
 .custom-select, .custom-input {
   width: 100%;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--bg-card);
   border: 1px solid var(--border-glass);
   color: var(--text-primary);
   padding: 0.875rem 1.25rem;
@@ -634,13 +634,13 @@ onUnmounted(() => {
 
 .custom-select:focus, .custom-input:focus {
   border-color: var(--text-accent);
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--bg-card-hover);
   box-shadow: 0 0 15px var(--accent-glow-violet);
 }
 
 .custom-select option {
-  background: #111;
-  color: #fff;
+  background: var(--bg-card);
+  color: var(--text-primary);
 }
 
 .bid-amount-input-wrapper {
@@ -725,8 +725,8 @@ onUnmounted(() => {
 .sim-header h2 {
   font-size: 1.6rem;
   font-weight: 700;
-  color: #00f2ff;
-  text-shadow: 0 0 10px rgba(0, 242, 255, 0.2);
+  color: var(--accent-blue);
+  text-shadow: 0 0 10px rgba(17, 24, 39, 0.08);
 }
 
 .sim-header .icon {
@@ -735,7 +735,7 @@ onUnmounted(() => {
 
 .activity-log {
   height: 150px;
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--bg-card);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-md);
   padding: 1rem;

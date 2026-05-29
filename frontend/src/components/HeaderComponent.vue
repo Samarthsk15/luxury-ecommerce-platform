@@ -1,35 +1,39 @@
 <template>
   <header class="luxe-header">
     <div class="header-inner">
-      <!-- Logo -->
-      <router-link :to="isAdminPort ? '/admin' : '/'" class="logo">
-        <span class="logo-text">{{ isAdminPort ? 'LUXE ADMIN' : 'LUXE' }}</span>
+      <router-link v-if="!authStore.isAuthenticated" to="/login" class="login-entry">
+        Log in
+      </router-link>
+
+      <router-link :to="isAdminSection ? '/admin' : '/'" class="logo">
+        <span class="logo-text">{{ isAdminSection ? 'LUXE ADMIN' : 'LUXE' }}</span>
         <span class="logo-dot"></span>
       </router-link>
 
-      <!-- Nav Links -->
       <nav class="nav-links">
-        <template v-if="isAdminPort">
+        <template v-if="isAdminSection">
           <router-link to="/admin" class="nav-item" active-class="active">Dashboard</router-link>
           <router-link to="/admin/bidding" class="nav-item" active-class="active">Bidding Portal</router-link>
-          <a href="http://localhost:5173" class="nav-item storefront-link">Storefront ↗</a>
+          <router-link to="/" class="nav-item storefront-link">Storefront</router-link>
         </template>
         <template v-else>
           <router-link to="/" class="nav-item" active-class="active">Shop</router-link>
           <router-link to="/deals" class="nav-item" active-class="active">Deals</router-link>
           <router-link to="/products" class="nav-item" active-class="active">Discover</router-link>
           <router-link to="/cart" class="nav-item" active-class="active">Cart</router-link>
-          <a v-if="authStore.isAdmin" href="http://localhost:5174/admin" class="nav-item admin-link">Admin Portal ↗</a>
+          <a v-if="authStore.isAdmin" href="http://localhost:5174/admin" class="nav-item admin-link">Admin Portal</a>
         </template>
       </nav>
 
-      <!-- Theme Toggle Mode (Light / Dark) next to search bar -->
-      <button @click="toggleLightDark" class="mode-toggle-btn" :title="themeStore.currentMood === 'minimal' ? 'Switch to Dark Mode' : 'Switch to Light Mode'">
-        <span v-if="themeStore.currentMood === 'minimal'">🌙</span>
-        <span v-else>☀️</span>
+      <button
+        type="button"
+        @click="toggleLightDark"
+        class="mode-toggle-btn"
+        :title="themeStore.currentMood === 'minimal' ? 'Switch to dark mode' : 'Switch to light mode'"
+      >
+        {{ themeStore.currentMood === 'minimal' ? 'Dark' : 'Light' }}
       </button>
 
-      <!-- Theme Selector Dropdown -->
       <div class="theme-selector">
         <select :value="themeStore.currentMood" @change="changeMood" class="mood-select">
           <option value="luxury">Luxury Mood</option>
@@ -39,24 +43,24 @@
         </select>
       </div>
 
-      <!-- Search -->
       <form class="search-box" @submit.prevent="doSearch">
-        <span class="search-icon">🔍</span>
+        <span class="search-icon">Search</span>
         <input v-model="query" type="text" placeholder="Search premium products..." />
-        <button type="button" class="mic-btn" @click="startVoiceSearch" :class="{ listening: isListening }" title="Voice Search">🎙️</button>
+        <button type="button" class="mic-btn" @click="startVoiceSearch" :class="{ listening: isListening }" title="Voice search">
+          Voice
+        </button>
       </form>
 
-      <!-- Right Actions -->
       <div class="header-actions">
-        <router-link v-if="!isAdminPort" to="/cart" class="cart-btn">
-          <span class="cart-icon">🛒</span>
+        <router-link v-if="!isAdminSection" to="/cart" class="cart-btn" title="Cart">
+          <span class="cart-icon">Cart</span>
           <span v-if="cartCount > 0" class="cart-badge">{{ cartCount }}</span>
         </router-link>
 
         <div v-if="authStore.isAuthenticated" class="user-pill">
           <span class="user-avatar">{{ userInitial }}</span>
           <span class="user-name">{{ authStore.user?.name || 'User' }}</span>
-          <button @click="logout" class="logout-btn">Sign Out</button>
+          <button type="button" @click="logout" class="logout-btn">Sign Out</button>
         </div>
       </div>
     </div>
@@ -65,19 +69,20 @@
 
 <script setup>
 import { ref, computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useCartStore } from '../store/cart';
 import { useAuthStore } from '../store/auth.js';
 import { useThemeStore } from '../store/theme.js';
-import { useRouter } from 'vue-router';
 
 const cartStore = useCartStore();
 const authStore = useAuthStore();
 const themeStore = useThemeStore();
 const router = useRouter();
+const route = useRoute();
 const query = ref('');
+const isListening = ref(false);
 
-const isAdminPort = computed(() => typeof window !== 'undefined' && window.location.port === '5174');
-
+const isAdminSection = computed(() => route.path.startsWith('/admin'));
 const cartCount = computed(() => cartStore.itemCount);
 const userInitial = computed(() => {
   const name = authStore.user?.name || 'U';
@@ -101,24 +106,23 @@ const doSearch = () => {
 const changeMood = (event) => {
   const mood = event.target.value;
   themeStore.setMood(mood);
-  
-  if (mood === 'luxury') return; // Luxury is just the baseline theme, don't force a category filter
-  
+
+  if (mood === 'luxury') return;
+
   let targetCategory = 'All';
   if (mood === 'gaming') targetCategory = 'gaming';
   if (mood === 'minimal') targetCategory = 'home';
   if (mood === 'festival') targetCategory = 'fashion';
-  
-  // Navigate directly to the products page filtered by this theme's vibe
+
   router.push({ path: '/products', query: { category: targetCategory } });
 };
 
-const isListening = ref(false);
 const startVoiceSearch = () => {
   if (!('webkitSpeechRecognition' in window)) {
-    alert("Voice search is not supported in your browser.");
+    alert('Voice search is not supported in your browser.');
     return;
   }
+
   const recognition = new window.webkitSpeechRecognition();
   recognition.continuous = false;
   recognition.interimResults = false;
@@ -133,7 +137,7 @@ const startVoiceSearch = () => {
     doSearch();
   };
   recognition.onerror = (event) => {
-    console.error("Speech recognition error", event.error);
+    console.error('Speech recognition error', event.error);
     isListening.value = false;
   };
   recognition.onend = () => {
@@ -153,7 +157,7 @@ const logout = () => {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(10, 10, 15, 0.8);
+  background: var(--bg-glass);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border-bottom: 1px solid var(--border-glass);
@@ -164,11 +168,29 @@ const logout = () => {
   margin: 0 auto;
   display: flex;
   align-items: center;
-  gap: 2rem;
+  gap: 1rem;
   padding: 0.875rem var(--gutter);
 }
 
-/* Logo */
+.login-entry {
+  flex-shrink: 0;
+  padding: 0.55rem 1rem;
+  border-radius: var(--radius-full);
+  background: var(--text-primary);
+  color: var(--bg-void);
+  border: 1px solid var(--border-glass);
+  font-family: var(--font-headline);
+  font-size: 0.875rem;
+  font-weight: 700;
+  transition: all 0.25s ease;
+}
+
+.login-entry:hover {
+  background: var(--text-accent);
+  color: var(--bg-void);
+  transform: translateY(-1px);
+}
+
 .logo {
   display: flex;
   align-items: center;
@@ -181,7 +203,6 @@ const logout = () => {
   font-family: var(--font-headline);
   font-size: 1.5rem;
   font-weight: 800;
-  letter-spacing: -0.03em;
   color: var(--text-primary);
 }
 
@@ -193,7 +214,6 @@ const logout = () => {
   animation: glow-pulse 3s ease-in-out infinite;
 }
 
-/* Nav */
 .nav-links {
   display: flex;
   gap: 0.25rem;
@@ -204,15 +224,14 @@ const logout = () => {
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--text-secondary);
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 0.8rem;
   border-radius: var(--radius-full);
   transition: all 0.25s ease;
-  letter-spacing: 0.01em;
 }
 
 .nav-item:hover {
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-card-hover);
 }
 
 .nav-item.active {
@@ -220,58 +239,76 @@ const logout = () => {
   background: rgba(212, 175, 55, 0.1);
 }
 
-/* Theme Selector */
-.mood-select {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text-primary);
+.mode-toggle-btn,
+.mood-select,
+.cart-btn,
+.mic-btn {
   border: 1px solid var(--border-glass);
+}
+
+.mode-toggle-btn {
+  flex-shrink: 0;
+  min-width: 56px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  transition: all 0.3s ease;
+}
+
+.mode-toggle-btn:hover,
+.cart-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--border-glass-hover);
+}
+
+.mood-select {
+  background: var(--bg-card);
+  color: var(--text-primary);
   padding: 0.4rem 0.8rem;
   border-radius: var(--radius-full);
   font-family: var(--font-headline);
   font-weight: 600;
   font-size: 0.8rem;
   cursor: pointer;
-  outline: none;
-  transition: all 0.3s;
-}
-
-.mood-select:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: var(--border-glass-hover);
 }
 
 .mood-select option {
-  background: #111;
-  color: white;
+  background: var(--bg-surface);
+  color: var(--text-primary);
 }
 
-/* Search */
 .search-box {
   flex: 1;
   max-width: 400px;
+  min-width: 180px;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-card);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-full);
-  padding: 0.5rem 1rem;
+  padding: 0.45rem 0.65rem 0.45rem 1rem;
   transition: all 0.3s ease;
 }
 
 .search-box:focus-within {
   border-color: var(--accent-violet);
-  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
-  background: rgba(255, 255, 255, 0.07);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+  background: var(--bg-card-hover);
 }
 
 .search-icon {
-  font-size: 0.875rem;
-  opacity: 0.5;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
 }
 
 .search-box input {
   flex: 1;
+  min-width: 0;
   border: none;
   background: transparent;
   color: var(--text-primary);
@@ -283,58 +320,45 @@ const logout = () => {
 }
 
 .mic-btn {
-  background: transparent;
-  border: none;
-  font-size: 1.1rem;
-  cursor: pointer;
-  opacity: 0.6;
+  flex-shrink: 0;
+  padding: 0.35rem 0.55rem;
+  border-radius: var(--radius-full);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 0.7rem;
   transition: all 0.3s ease;
-  padding: 0 0.5rem;
 }
 
-.mic-btn:hover {
-  opacity: 1;
-  transform: scale(1.1);
-}
-
+.mic-btn:hover,
 .mic-btn.listening {
-  opacity: 1;
-  animation: mic-pulse 1.5s infinite;
+  color: var(--text-primary);
+  border-color: var(--border-glass-hover);
 }
 
-@keyframes mic-pulse {
-  0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(239, 68, 68, 0)); }
-  50% { transform: scale(1.2); filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.8)); }
-  100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(239, 68, 68, 0)); }
-}
-
-/* Actions */
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
   flex-shrink: 0;
 }
 
 .cart-btn {
   position: relative;
-  width: 40px;
+  min-width: 48px;
   height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border-glass);
+  background: var(--bg-card);
+  color: var(--text-primary);
   transition: all 0.25s ease;
 }
 
-.cart-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: var(--border-glass-hover);
+.cart-icon {
+  font-size: 0.75rem;
+  font-weight: 700;
 }
-
-.cart-icon { font-size: 1.1rem; }
 
 .cart-badge {
   position: absolute;
@@ -358,7 +382,7 @@ const logout = () => {
   align-items: center;
   gap: 0.625rem;
   padding: 0.375rem 0.5rem 0.375rem 0.375rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-card);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-full);
 }
@@ -371,7 +395,7 @@ const logout = () => {
   justify-content: center;
   border-radius: 50%;
   background: var(--accent-gradient);
-  color: white;
+  color: #ffffff;
   font-size: 0.75rem;
   font-weight: 700;
   font-family: var(--font-headline);
@@ -387,7 +411,7 @@ const logout = () => {
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-muted);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg-card);
   padding: 0.3rem 0.65rem;
   border-radius: var(--radius-full);
   transition: all 0.2s ease;
@@ -398,29 +422,6 @@ const logout = () => {
   background: rgba(239, 68, 68, 0.1);
 }
 
-.mode-toggle-btn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border-glass);
-  color: var(--text-primary);
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-full);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  flex-shrink: 0;
-}
-
-.mode-toggle-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: var(--border-glass-hover);
-  transform: scale(1.05);
-  box-shadow: 0 0 15px var(--accent-glow);
-}
-
 .storefront-link {
   color: #00f2ff !important;
   font-weight: 600;
@@ -429,5 +430,46 @@ const logout = () => {
 .admin-link {
   color: #d4af37 !important;
   font-weight: 600;
+}
+
+@media (max-width: 980px) {
+  .header-inner {
+    flex-wrap: wrap;
+  }
+
+  .search-box {
+    order: 2;
+    max-width: none;
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .header-inner {
+    gap: 0.65rem;
+  }
+
+  .nav-links {
+    order: 3;
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 0.15rem;
+  }
+
+  .nav-item {
+    white-space: nowrap;
+  }
+
+  .theme-selector {
+    flex: 1;
+  }
+
+  .mood-select {
+    width: 100%;
+  }
+
+  .user-name {
+    display: none;
+  }
 }
 </style>

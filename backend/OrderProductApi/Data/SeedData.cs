@@ -37,32 +37,39 @@ public static class SeedData
             
             context.Products.AddRange(initialProducts);
 
-            // Generate 10,000 more products
+            // Generate at least 100 meaningful products per category
             var random = new Random();
             var categories = new[] { "electronics", "fashion", "home", "beauty", "toys", "sports", "books", "groceries", "gaming", "automotive" };
             var prefixes = new[] { "Premium", "Ultra", "Classic", "Modern", "Smart", "Eco-friendly", "Luxury", "Essential", "Pro", "Vintage" };
             var baseNames = new[] { "Gadget", "Device", "Apparel", "Tool", "Accessory", "Equipment", "Kit", "Set", "Bundle", "Edition" };
 
-            var massiveProductsList = new List<Product>();
-            for (int i = 11; i <= 10010; i++)
+            var generated = new List<Product>();
+            foreach (var cat in categories)
             {
-                var cat = categories[random.Next(categories.Length)];
-                var pre = prefixes[random.Next(prefixes.Length)];
-                var baseN = baseNames[random.Next(baseNames.Length)];
-                
-                massiveProductsList.Add(new Product
+                for (int j = 1; j <= 100; j++)
                 {
-                    Name = $"{pre} {cat} {baseN} #{i}",
-                    Category = cat,
-                    Description = $"A high-quality {cat} {baseN} designed for modern needs.",
-                    Price = random.Next(10, 1500) + 0.99m,
-                    InventoryCount = random.Next(0, 500),
-                    ImageUrl = $"https://via.placeholder.com/400x300?text={cat}+{i}"
-                });
+                    var pre = prefixes[random.Next(prefixes.Length)];
+                    var baseN = baseNames[random.Next(baseNames.Length)];
+                    generated.Add(new Product
+                    {
+                        Name = $"{pre} {capFirst(cat)} {baseN} #{j}",
+                        Category = cat,
+                        Description = $"{pre} {baseN} for {cat} — crafted for quality and performance.",
+                        Price = random.Next(10, 1500) + 0.99m,
+                        InventoryCount = random.Next(0, 500),
+                        ImageUrl = $"https://via.placeholder.com/400x300?text={cat}+{j}"
+                    });
+                }
             }
-            
-            context.Products.AddRange(massiveProductsList);
+
+            context.Products.AddRange(generated);
             context.SaveChanges();
         }
+    }
+
+    private static string capFirst(string s)
+    {
+        if (string.IsNullOrEmpty(s)) return s;
+        return char.ToUpper(s[0]) + (s.Length > 1 ? s.Substring(1) : string.Empty);
     }
 }
